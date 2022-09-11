@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 html,
 body {
   padding: 0;
@@ -15,7 +19,7 @@ a {
   box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
   }
@@ -23,4 +27,16 @@ a {
     color: white;
     background: black;
   }
+} */
+
+input {
+  @apply border border-black h-10 px-2;
+}
+
+input:not(:last-child) {
+  @apply border-r-0;
+}
+
+button:not(.link) {
+  @apply border border-black h-10 px-2;
 }

@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int         @id @default(autoincrement())
+  email      String      @unique
+  name       String
+  userInRoom UserInRoom?
+  hostedRoom Room?
+  player     Player[]
+}
+
+model UserInRoom {
+  user    User    @relation(fields: [userId], references: [id])
+  userId  Int     @unique
+  room    Room    @relation(fields: [roomId], references: [id])
+  roomId  Int
+  isReady Boolean
+}
+
+model Room {
+  id        Int          @id @default(autoincrement())
+  title     String
+  host      User         @relation(fields: [hostId], references: [id])
+  hostId    Int          @unique
+  users     UserInRoom[]
+  matches   Matches?
+  matchesId Int?
+}
+
+model Player {
+  id                       Int                     @id @default(autoincrement())
+  user                     User                    @relation(fields: [userId], references: [id])
+  userId                   Int
+  matches                  Matches?                @relation(fields: [matchesId], references: [id])
+  status                   Int                     @default(0)
+  matchesId                Int?
+  role                     String
+  measureCards             MeasureCardsOnPlayers[]
+  clueCards                ClueCardsOnPlayers[]
+  remainingNumOfSolveCase  Int                     @default(0)
+  remainingNumOfAccomplice Int                     @default(0)
+}
+
+model ClueCard {
+  name    String               @unique
+  players ClueCardsOnPlayers[]
+}
+
+model ClueCardsOnPlayers {
+  clueCard     ClueCard @relation(fields: [clueCardName], references: [name])
+  clueCardName String
+
+  player   Player @relation(fields: [playerId], references: [id])
+  playerId Int
+
+  @@id([clueCardName, playerId])
+}
+
+model MeasureCard {
+  name    String                  @unique
+  players MeasureCardsOnPlayers[]
+}
+
+model MeasureCardsOnPlayers {
+  measureCard     MeasureCard @relation(fields: [measureCardName], references: [name])
+  measureCardName String
+
+  player   Player @relation(fields: [playerId], references: [id])
+  playerId Int
+
+  @@id([measureCardName, playerId])
+}
+
+model Information {
+  content           String           @unique
+  informationCard   InformationCard? @relation(fields: [informationCardId], references: [id])
+  informationCardId Int?
+}
+
+model InformationCardCategory {
+  name            String            @unique
+  informationCard InformationCard[]
+}
+
+model InformationCard {
+  id                        Int                         @id @default(autoincrement())
+  category                  InformationCardCategory     @relation(fields: [categoryName], references: [name])
+  categoryName              String
+  list                      Information[]
+  informationCardsOnMatches InformationCardsOnMatches[]
+}
+
+model InformationCardsOnMatches {
+  informationCard   InformationCard @relation(fields: [informationCardId], references: [id])
+  informationCardId Int
+
+  matche   Matches @relation(fields: [matcheId], references: [id])
+  matcheId Int
+
+  order  Int @default(-1)
+  status Int @default(0)
+
+  @@id([informationCardId, matcheId])
+}
+
+model Option {
+  weight  Int                @id @default(autoincrement())
+  matches OptionsOnMatches[]
+}
+
+model OptionsOnMatches {
+  option       Option  @relation(fields: [optionWeight], references: [weight])
+  optionWeight Int
+  matches      Matches @relation(fields: [matchesId], references: [id])
+  matchesId    Int
+  indexOnCard  Int
+  order        Int     @default(-1)
+
+  @@id([optionWeight, matchesId])
+}
+
+model Matches {
+  id                 Int                         @id @default(autoincrement())
+  phases             Int
+  rounds             Int                         @default(1)
+  currentPlayerIndex Int
+  players            Player[]
+  informationCards   InformationCardsOnMatches[]
+  options            OptionsOnMatches[]
+  measure            String?
+  clue               String?
+  Room               Room                        @relation(fields: [roomId], references: [id])
+  roomId             Int                         @unique
+}
