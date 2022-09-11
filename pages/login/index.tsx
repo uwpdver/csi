@@ -76,7 +76,7 @@ const Login: NextPageWithLayout<{}> = () => {
   return (
     <>
       <Header>犯罪现场</Header>
-      <div className="mt-auto">
+      <div className="mt-auto mb-32">
         {isSignUp ? (
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="flex items-center">

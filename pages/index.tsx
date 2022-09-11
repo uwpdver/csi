@@ -7,8 +7,8 @@ import { prisma } from "../lib/prisma";
 import nookies from "nookies";
 import { Room } from "@prisma/client";
 import Link from "next/link";
-import Header from "../components/Header";
-import { getLayout } from "../components/Layout";
+import Header from "@/components/Header";
+import { getLayout } from "@/components/Layout";
 
 interface Props {
   room: Room | null;
@@ -74,7 +74,7 @@ const Home: NextPageWithLayout<Props> = (props) => {
           ) : null}
         </div>
       </div>
-      <div className="mt-auto">
+      <div className="mt-auto mb-32">
         <form className="flex items-center" onSubmit={handleOnCreateRoom}>
           <input
             className="flex-1"

@@ -141,11 +141,11 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
           </Link>
         )}
       </div>
-      <ul className="grid grid-cols-3 gap-4 mt-4">
+      <ul className="grid grid-cols-4 gap-4 mt-8">
         {users.map((user) => (
           <li key={user.userId}>
             <div className="flex flex-col items-center">
-              <div className="h-20 w-20 flex items-center justify-center rounded-full bg-gray-300 text-lg">
+              <div className="w-full aspect-square mb-2 flex items-center rounded-full justify-center bg-gray-300 text-3xl">
                 <span>{user.user.name?.slice(0, 1)}</span>
               </div>
               <div className="text-center truncate overflow-hidden w-full">
