@@ -1,48 +1,61 @@
 import React from "react";
 import Image from "next/image";
 import classnames from "classnames";
-import {
-  User,
-  MeasureCardsOnPlayers,
-  ClueCardsOnPlayers,
-  Player,
-  MeasureCard,
-  ClueCard,
-} from "@prisma/client";
+import { useDispatch, useSelector } from "pages/matches/[...id]";
+import { PlayerInClient } from "@/types/client";
 
 export interface Props {
-  player: Player & {
-    user: User;
-    measureCards: (MeasureCardsOnPlayers & {
-      measureCard: MeasureCard;
-    })[];
-    clueCards: (ClueCardsOnPlayers & {
-      clueCard: ClueCard;
-    })[];
-  };
-  canSelect: boolean;
-  selectedMeasure?: string;
-  selectedClue?: string;
-  onClickCard?(data: { playerId: number; type: string; name: string }): void;
-  isSelected?: boolean;
+  isSelf: boolean;
+  player: PlayerInClient;
+  index: number;
+  selectPlayerId: number;
 }
 
 const HandCardsPanel = ({
   player,
-  canSelect,
-  selectedMeasure = "",
-  selectedClue = "",
-  onClickCard = () => {},
-  isSelected = false,
+  selectPlayerId,
+  index,
+  isSelf,
 }: Props) => {
+  const {
+    canSelect,
+    selectedMeasure,
+    selectedClue,
+    selectedPlayerIndex,
+    selectFor,
+  } = useSelector<{
+    canSelect: boolean;
+    selectFor: string;
+    selectedMeasure: string;
+    selectedClue: string;
+    selectedPlayerIndex: number;
+  }>((state) => ({
+    canSelect: state.handCardSelect.canSelect,
+    selectFor: state.handCardSelect.selectFor,
+    selectedMeasure: state.handCardSelect.selectedMeasure,
+    selectedClue: state.handCardSelect.selectedClue,
+    selectedPlayerIndex: state.handCardSelect.selectedPlayerIndex,
+  }));
+  const dispatch = useDispatch();
+
   const hanldeClickCard = (type: string, name: string) => {
-    canSelect &&
-      onClickCard({
-        type,
-        name,
-        playerId: player.id,
-      });
+    if (!canSelect) return null;
+    if (selectFor === "murder" && !isSelf) {
+      alert("只能选择自己的手牌");
+      return null;
+    }
+    dispatch({
+      type: "SELECT_HAND_CARD",
+      playerId: player.id,
+      playerIndex: index,
+      selectPlayerId,
+      handCardType: type,
+      handCardContent: name,
+    });
   };
+
+  const isSelected = selectedPlayerIndex === index;
+
   return (
     <div className="space-y-2 ">
       <div className="flex items-center justify-between">

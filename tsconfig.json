@@ -20,6 +20,7 @@
       "@/constants/*": ["constants/*"],
       "@/utils/*": ["utils/*"],
       "@/types/*": ["types/*"],
+      "@/reducers/*": ["reducers/*"],
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],

@@ -37,3 +37,13 @@ export type MatchesInClient = Matches & {
     option: Option;
   })[];
 };
+
+export type PlayerInClient = Player & {
+  user: User;
+  measureCards: (MeasureCardsOnPlayers & {
+    measureCard: MeasureCard;
+  })[];
+  clueCards: (ClueCardsOnPlayers & {
+    clueCard: ClueCard;
+  })[];
+};
