@@ -4,7 +4,9 @@ import { io, Socket } from "socket.io-client";
 import type { AppProps } from "next/app";
 import { ServerToClientEvents, ClientToServerEvents } from "@/types/socket";
 import { LOCAL_STORAGE_KEYS } from "@/constants/index";
+import Modal from 'react-modal'
 import "../styles/globals.css";
+
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -13,6 +15,8 @@ export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
 type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout;
 };
+
+Modal.setAppElement('#__next');
 
 export let socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 

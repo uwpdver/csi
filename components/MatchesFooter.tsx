@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from "./../pages/matches/[...id]";
 import { socket, UserInfoContext } from "pages/_app";
 import { Phases, Role } from "@/types/index";
 import { PlayerInClient } from "@/types/client";
+import Avatar from "./Avatar";
 
 const ROLE_TO_TEXT_MAP = {
   [Role.Witness]: "目击者",
@@ -20,16 +21,16 @@ const ROLE_TO_TEXT_MAP = {
 
 interface Props {
   self?: PlayerInClient;
-  murder?: PlayerInClient;
   curSpeakerId: number;
 }
 
-const MatchesFooter = ({ self, murder, curSpeakerId }: Props) => {
+const MatchesFooter = ({ self, curSpeakerId }: Props) => {
   const { userInfo } = useContext(UserInfoContext);
   const router = useRouter();
   const {
     matchesId,
     roomId,
+    murder,
     phases,
     measure,
     clue,
@@ -37,20 +38,14 @@ const MatchesFooter = ({ self, murder, curSpeakerId }: Props) => {
     selectedMeasure,
     selectedClue,
     selectFor,
-  } = useSelector<{
-    matchesId: number;
-    roomId: number;
-    phases: number;
-    measure: string | null;
-    clue: string | null;
-    canSelect: boolean;
-    selectedMeasure: string;
-    selectedClue: string;
-    selectFor: string;
-  }>((state) => {
+  } = useSelector((state) => {
+    const murder = state.matches.players.find(
+      (player) => player.role === Role.Murderer
+    );
     return {
       matchesId: state.matches.id,
       roomId: state.matches.roomId,
+      murder,
       phases: state.matches.phases,
       clue: state.matches.clue,
       measure: state.matches.measure,
@@ -66,7 +61,14 @@ const MatchesFooter = ({ self, murder, curSpeakerId }: Props) => {
 
   // 点击确认破案按钮
   const handleComfirmSolve = () => {
-    debugger
+    if (!selectedMeasure) {
+      alert("请选择一张手段牌");
+      return null;
+    }
+    if (!selectedClue) {
+      alert("请选择一张线索牌");
+      return null;
+    }
     let payload = {
       userId: userInfo?.userId,
       roomId,
@@ -130,9 +132,7 @@ const MatchesFooter = ({ self, murder, curSpeakerId }: Props) => {
   } else if (canSelect) {
     return (
       <>
-        <div className="h-10 w-10 mr-2 bg-gray-200 rounded-full flex items-center justify-center">
-          {self?.user.name?.slice(0, 1)}
-        </div>
+        <Avatar nickname={self?.user.name} />
         <div className="flex-1">
           <span className="font-bold">
             {Phases.Murder === phases && self?.role === Role.Murderer
@@ -150,9 +150,7 @@ const MatchesFooter = ({ self, murder, curSpeakerId }: Props) => {
   } else {
     return (
       <>
-        <div className="h-10 w-10 mr-2 bg-gray-200 rounded-full flex items-center justify-center">
-          {self?.user.name?.slice(0, 1)}
-        </div>
+        <Avatar nickname={self?.user.name} />
         <div className="flex-1">
           <div>{self?.user.name}</div>
           <span className="text-sm text-gray-500">
@@ -188,4 +186,4 @@ const MatchesFooter = ({ self, murder, curSpeakerId }: Props) => {
   }
 };
 
-export default MatchesFooter;
+export default React.memo(MatchesFooter);

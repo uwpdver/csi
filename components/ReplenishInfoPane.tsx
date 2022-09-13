@@ -1,380 +1,229 @@
-import classnames from "classnames";
-import { useReducer } from "react";
+import React, { useReducer, useMemo, useCallback, useEffect } from "react";
 import {
-  Information,
-  InformationCard,
-  InformationCardsOnMatches,
-} from "@prisma/client";
-import { default as InformationCardComponent } from "./InformationCard";
-import { OptionInClient } from "@/types/client";
+  InfoCardInClient,
+  OptionInClient,
+  PlayerInClient,
+} from "@/types/client";
 import { InformationCardStatus, Role } from "@/types/index";
-
-type InfoCard = InformationCardsOnMatches & {
-  informationCard: InformationCard & {
-    list: Information[];
-  };
-};
+import reducers from "@/reducers/index";
+import { default as InformationCardComponent } from "./InformationCard";
+import { ACTION_GAME_ADDITIONAL_TESTIMONIALS } from "@/constants/index";
+import { useSelector } from "pages/matches/[...id]";
+import { socket } from "pages/_app";
+import Option from "./Option";
+import { createOption, isEmptyOption } from "@/utils/option";
 
 export interface Props {
-  defaultInformationCards: InfoCard[];
-  defaultOptions: OptionInClient[];
-  isHidden?: boolean;
-  isPointOutInfo?: boolean;
-  onComfirm(
-    informationCards: Omit<InformationCardsOnMatches, "matcheId">[],
-    options: OptionInClient[]
-  ): void;
-  onQuit(informationCards: Omit<InformationCardsOnMatches, "matcheId">[]): void;
-  role: string;
+  userId: number;
+  roomId: number;
+  matchesId: number;
+  self?: PlayerInClient;
 }
 
-interface InitState {
-  optionsSetted: OptionInClient[];
-  optionsNotSet: OptionInClient[];
-  curOptionIndex: number;
-  informationCards: InfoCard[];
-  selectedNewCardIndex: number;
-  changedOptions: OptionInClient[];
-  changedInfoCards: Omit<InformationCardsOnMatches, "matcheId">[];
-  initOptions: OptionInClient[];
-  initInformationCards: InfoCard[];
-}
+const ReplenishInfoPane = ({ userId, roomId, matchesId, self }: Props) => {
+  const { initInformationCards, initOptions } = useSelector((state) => ({
+    initInformationCards: state.matches.informationCards,
+    initOptions: state.matches.options.map((option) =>
+      createOption(option.optionWeight, option.indexOnCard)
+    ),
+  }));
 
-const getInitState = ({
-  initOptions,
-  initInformationCards,
-}: {
-  initOptions: OptionInClient[];
-  initInformationCards: InfoCard[];
-}): InitState => ({
-  initOptions,
-  initInformationCards,
-  optionsSetted: initOptions,
-  optionsNotSet: [],
-  curOptionIndex: -1,
-  informationCards: initInformationCards,
-  selectedNewCardIndex: -1,
-  changedOptions: [],
-  changedInfoCards: [],
-});
-
-type ACTION_TYPE =
-  | "RESET_ALL"
-  | "SWAP_INFO_CARD"
-  | "PUT_OPTION_ON_CARD"
-  | "SELECT_OPTION"
-  | "SELECT_NEW_INFO_CARD";
-
-const reducer = (
-  state: InitState,
-  action: { type: ACTION_TYPE; [key: string]: any }
-) => {
-  switch (action.type) {
-    case "RESET_ALL":
-      return {
-        ...state,
-        optionsSetted: state.initOptions,
-        optionsNotSet: [],
-        curOptionIndex: -1,
-        informationCards: state.initInformationCards,
-        selectedNewCardIndex: -1,
-        changedOptions: [],
-        changedInfoCards: [],
-      };
-    case "SWAP_INFO_CARD":
-      return swapInfoCard(state, action);
-    case "PUT_OPTION_ON_CARD":
-      return putOptionOnCard(state, action);
-    case "SELECT_OPTION":
-      return {
-        ...state,
-        curOptionIndex: action.index,
-      };
-    case "SELECT_NEW_INFO_CARD":
-      const { curOptionIndex } = state;
-      const { index } = action;
-      return {
-        ...state,
-        selectedNewCardIndex: index === curOptionIndex ? -1 : index,
-      };
-    default:
-      return state;
-  }
-};
-
-function swapInfoCard(
-  state: InitState,
-  action: { type: ACTION_TYPE; [key: string]: any }
-): InitState {
-  const {
-    selectedNewCardIndex,
-    informationCards,
-    changedInfoCards,
-    optionsNotSet,
-    optionsSetted,
-  } = state;
-  if (selectedNewCardIndex === -1) {
-    return { ...state };
-  }
-  const { index } = action;
-  const copyCards = [...informationCards];
-  const temp = copyCards[index];
-  const selectedNewCard = informationCards[selectedNewCardIndex];
-  copyCards[index] = {
-    ...selectedNewCard,
-    order: temp.order,
-    status: InformationCardStatus.Show,
-  };
-  copyCards[selectedNewCardIndex] = {
-    ...temp,
-    order: selectedNewCard.order,
-    status: InformationCardStatus.Discard,
-  };
-  return {
-    ...state,
-    optionsNotSet: [...optionsNotSet, optionsSetted[index]],
-    optionsSetted: [
-      ...optionsSetted.slice(0, index),
-      {
-        weight: 0,
-        indexOnCard: -1,
-      },
-      ...optionsSetted.slice(index + 1),
-    ],
-    selectedNewCardIndex: -1,
-    informationCards: copyCards,
-    changedInfoCards: [
-      ...changedInfoCards,
-      {
-        informationCardId: temp.informationCardId,
-        order: selectedNewCard.order,
-        status: InformationCardStatus.Discard,
-      },
-      {
-        informationCardId: selectedNewCard.informationCardId,
-        order: temp.order,
-        status: InformationCardStatus.Show,
-      },
-    ],
-  };
-}
-
-function putOptionOnCard(
-  state: InitState,
-  action: { type: ACTION_TYPE; [key: string]: any }
-) {
-  const { index, subIndex } = action;
-  const { optionsSetted, optionsNotSet, curOptionIndex, changedOptions } =
-    state;
-  const optionSetted = optionsSetted[index];
-  const optionNotSet = optionsNotSet[curOptionIndex];
-  if (optionSetted && optionSetted.weight === 0 && optionNotSet) {
-    const newOption = { weight: optionNotSet.weight, indexOnCard: subIndex };
-    return {
-      ...state,
-      curOptionIndex: -1,
-      optionsNotSet: optionsNotSet.filter(
-        (option, index) => index !== curOptionIndex
-      ),
-      changedOptions: [...changedOptions, newOption],
-      optionsSetted: [
-        ...optionsSetted.slice(0, index),
-        newOption,
-        ...optionsSetted.slice(index + 1),
-      ],
-    };
-  }
-  return { ...state };
-}
-
-const ReplenishInfoPane = ({
-  isHidden,
-  defaultOptions,
-  defaultInformationCards,
-  onComfirm,
-  role,
-  onQuit,
-}: Props) => {
-  const initState = getInitState({
-    initInformationCards: defaultInformationCards,
-    initOptions: defaultOptions,
-  });
   const [
     {
-      optionsSetted,
-      optionsNotSet,
-      curOptionIndex,
-      informationCards,
-      changedOptions,
-      changedInfoCards,
+      optionsSetted, // 已被放置的所有选项物
+      optionsNotSet, // 未被放置的所有选项物
+      curOptionIndex, // 选中的未被放置的选项物的在列表中的索引
+      informationCards, // 信息卡列表
+      changedOptions, // 改动过的选项物
+      changedInfoCards, // 改动过的信息卡
     },
     dispatch,
-  ] = useReducer(reducer, initState);
-
-  const oldCards = informationCards.slice(2, 6);
-  const notShowingCards = informationCards.slice(6);
-  const newCards = notShowingCards.filter(
-    (card) => card.status === InformationCardStatus.Pending
+  ] = useReducer(
+    reducers.replenishPane.reducer,
+    reducers.replenishPane.getInitState({
+      initInformationCards,
+      initOptions,
+    })
   );
-  const discardedCards = notShowingCards.filter(
-    (card) => card.status === InformationCardStatus.Discard
-  );
-  const optionsSettedShowed = optionsSetted.slice(2, 6);
 
-  const handleClickItem = (index: number, subIndex: number) => {
-    if (role !== Role.Witness) return null;
-    dispatch({ type: "PUT_OPTION_ON_CARD", index, subIndex });
-  };
+  const [showingCards, newCards, discardedCards] = useMemo(() => {
+    const showingCards = informationCards.slice(2, 6);
+    const newCards: InfoCardInClient[] = [];
+    const discardedCards: InfoCardInClient[] = [];
+    informationCards.slice(6).forEach((card) => {
+      if (card.status === InformationCardStatus.Pending) {
+        newCards.push(card);
+      } else if (card.status === InformationCardStatus.Discard) {
+        discardedCards.push(card);
+      }
+    });
+    return [showingCards, newCards, discardedCards];
+  }, [informationCards]);
 
-  const handleConfirmPointOutInformation = () => {
-    if (
-      optionsSetted.length !== 6 ||
-      optionsSetted.some((option) => option.weight === 0)
-    ) {
-      return;
+  useEffect(() => {
+    if (initInformationCards.length > 0) {
+      dispatch({
+        type: "UPDATE_INFORMATION_CARDS",
+        infoCards: initInformationCards,
+      });
     }
-    onComfirm(changedInfoCards, changedOptions);
-  };
+  }, [initInformationCards]);
 
-  const hanleClickOptionNotSet = (index: number) => {
+  useEffect(() => {
+    if (initOptions.length > 0) {
+      dispatch({ type: "UPDATE_OPTIONS", options: initOptions });
+    }
+  }, [initOptions]);
+
+  const hanleClickOptionNotSet = (index: number, e: React.MouseEvent) => {
     dispatch({ type: "SELECT_OPTION", index });
   };
 
-  const handleOldCardClick = (index: number) => {
-    dispatch({ type: "SWAP_INFO_CARD", index });
-  };
-
-  const handleNewCardClick = (index: number) => {
-    if (role !== Role.Witness) return null;
-    if (informationCards[index]?.status === InformationCardStatus.Pending) {
-      dispatch({ type: "SELECT_NEW_INFO_CARD", index });
-    }
-  };
-
+  // 撤销更改
   const handleReset = () => {
     dispatch({ type: "RESET_ALL" });
   };
 
-  const handleQuit = () => {
-    onQuit(
-      newCards.map((card) => ({
-        ...card,
-        status: InformationCardStatus.Discard,
-      }))
-    );
+  // 确认
+  const handleConfirm = () => {
+    if (optionsSetted.length !== 6 || optionsSetted.some(isEmptyOption)) {
+      return;
+    }
+    socket.emit(ACTION_GAME_ADDITIONAL_TESTIMONIALS, {
+      userId,
+      roomId,
+      matchesId,
+      options: changedOptions,
+      informationCards: changedInfoCards,
+    });
   };
 
-  const showingCardsElem = (
-    <>
-      <div className="mb-2">场上的场景卡</div>
-      <ul className="grid grid-cols-4 gap-1 space-x-2 text-center relative">
-        {oldCards.map((card, index) => {
-          const option = optionsSettedShowed[index];
-          return (
-            <li className="shrink-0 basis-20" key={index}>
-              <InformationCardComponent
-                isHidden={isHidden}
-                index={card.order - 1}
-                option={option}
-                status={card.status}
-                categoryName={card.informationCard.categoryName}
-                list={card.informationCard.list}
-                onClickItem={handleClickItem}
-                onClick={handleOldCardClick}
-              />
-            </li>
-          );
-        })}
-      </ul>
-    </>
-  );
+  // 放弃
+  const handleQuit = () => {
+    socket.emit(ACTION_GAME_ADDITIONAL_TESTIMONIALS, {
+      userId,
+      roomId,
+      matchesId,
+      options: [],
+      informationCards: newCards.map((card) => ({
+        ...card,
+        status: InformationCardStatus.Discard,
+      })),
+    });
+  };
 
-  const optionsNotSetElem = (
-    <div className="flex items-center mt-4">
-      <ul className="flex flex-1 space-x-2 mx-2">
-        {optionsNotSet.map((option, index) => (
-          <li
-            key={option.weight}
-            onClick={hanleClickOptionNotSet.bind(null, index)}
-            className={classnames(
-              "bg-red-600 border border-black h-10 w-10 rounded-full flex items-center justify-center font-bold text-xl text-white",
-              {
-                "bg-red-300": curOptionIndex === index,
-              }
-            )}
-          >
-            {option.weight}
-          </li>
-        ))}
-      </ul>
+  const optionsSettedShowed = optionsSetted.slice(2, 6);
+  const isWitness = self?.role === Role.Witness;
 
-      <button
-        className="ml-auto mr-0 rounded-full rounded-r-none"
-        onClick={handleReset}
-      >
-        撤销
-      </button>
-    </div>
+  const cardItemRender = useCallback(
+    (card: InfoCardInClient, index: number) => {
+      const handleCardClick = (orginIndex: number) => {
+        if (!isWitness) return null;
+        if (card.status === InformationCardStatus.Show) {
+          dispatch({ type: "SWAP_INFO_CARD", orginIndex });
+        } else if (card.status === InformationCardStatus.Pending) {
+          dispatch({ type: "SELECT_NEW_INFO_CARD", orginIndex });
+        }
+      };
+
+      const handleClickItem = (orginIndex: number, subIndex: number) => {
+        if (!isWitness) return null;
+        if (card.status !== InformationCardStatus.Show) return null;
+        dispatch({
+          type: "PUT_OPTION_ON_CARD",
+          orginIndex,
+          subIndex,
+        });
+      };
+
+      const option =
+        card.status === InformationCardStatus.Show
+          ? optionsSettedShowed[index]
+          : undefined;
+
+      return (
+        <li className="shrink-0 basis-20" key={index}>
+          <InformationCardComponent
+            card={card}
+            option={option}
+            onClickItem={handleClickItem}
+            onClick={handleCardClick}
+          />
+        </li>
+      );
+    },
+    [optionsSettedShowed, isWitness]
   );
 
   const notShowingCardPaneRender = (
     name: string,
-    cards: InfoCard[],
-    onCardClick?: (index: number) => void
+    cards: InfoCardInClient[]
   ) => {
     if (!cards.length) return null;
     return (
       <div>
         <div className="mt-4 mb-2">{name}</div>
         <ul className="flex flex-nowrap space-x-2 text-center relative">
-          {cards.map((card, index) => {
-            return (
-              <li className="shrink-0 basis-20" key={index}>
-                <InformationCardComponent
-                  isHidden={isHidden}
-                  index={card.order - 1}
-                  status={card.status}
-                  categoryName={card.informationCard.categoryName}
-                  list={card.informationCard.list}
-                  onClickItem={handleClickItem}
-                  onClick={onCardClick}
-                />
-              </li>
-            );
-          })}
+          {cards.map(cardItemRender)}
         </ul>
       </div>
     );
   };
 
-  const notShowingCardsElem = (
-    <div className="flex space-x-2">
-      {notShowingCardPaneRender("新增的场景卡", newCards, handleNewCardClick)}
-      {notShowingCardPaneRender("废弃的场景卡", discardedCards)}
-    </div>
-  );
-
-  const footerElem = (
-    <div className="flex space-x-2 mt-8">
-      <button className="flex-1" onClick={handleConfirmPointOutInformation}>
-        确定
-      </button>
-      <button className="flex-1" onClick={handleQuit}>
-        放弃
-      </button>
-    </div>
+  const optionItemRender = (option: OptionInClient, index: number) => (
+    <Option
+      key={option.weight}
+      weight={option.weight}
+      onClick={hanleClickOptionNotSet.bind(null, index)}
+      isSelected={index === curOptionIndex}
+    />
   );
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1">
-        {showingCardsElem}
-        {role === Role.Witness && optionsNotSetElem}
-        {notShowingCardsElem}
+        {/* 场上的场景卡 */}
+        <div className="mb-2">场上的场景卡</div>
+        <ul className="grid grid-cols-4 gap-1 space-x-2 text-center relative">
+          {showingCards.map(cardItemRender)}
+        </ul>
+
+        {/* 可放置的选项物 */}
+        {isWitness && (
+          <div className="flex items-center mt-4">
+            <ul className="flex flex-1 space-x-2 mx-2">
+              {optionsNotSet.map(optionItemRender)}
+            </ul>
+
+            <button
+              className="ml-auto mr-0 rounded-full rounded-r-none"
+              onClick={handleReset}
+            >
+              撤销
+            </button>
+          </div>
+        )}
+
+        {/* 其他卡片 */}
+        <div className="flex space-x-2">
+          {notShowingCardPaneRender("新增的场景卡", newCards)}
+          {notShowingCardPaneRender("废弃的场景卡", discardedCards)}
+        </div>
       </div>
-      {role === Role.Witness && footerElem}
+
+      {/* 底部命令栏 */}
+      {isWitness && (
+        <div className="flex space-x-2 mt-8">
+          <button className="flex-1" onClick={handleConfirm}>
+            确定
+          </button>
+          <button className="flex-1" onClick={handleQuit}>
+            放弃
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-export default ReplenishInfoPane;
+export default React.memo(ReplenishInfoPane);

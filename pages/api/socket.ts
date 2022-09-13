@@ -161,6 +161,7 @@ export const createGame = async (roomId: number) => {
   const pickedInfoCards = await prisma.informationCard.findMany().then((res) =>
     pickInfoCards(res).map((card, index) => ({
       order: index + 1,
+      status: InformationCardStatus.Show,
       informationCard: {
         connect: {
           id: card.id,

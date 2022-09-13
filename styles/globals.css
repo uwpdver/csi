@@ -40,3 +40,7 @@ input:not(:last-child) {
 button:not(.link) {
   @apply border border-black h-10 px-2;
 }
+
+.hand-card {
+  @apply border border-black rounded-md aspect-[3/4] text-center p-2;
+}

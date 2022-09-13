@@ -1,5 +1,6 @@
 import { MatchesInClient } from "@/types/client";
 import { Phases } from "@/types/index";
+import { Action } from './index';
 
 export type ActionType =
   | "RESET_HAND_CARD_SELECT"
@@ -43,10 +44,7 @@ export const initState = {
   },
 };
 
-type Action<T = ActionType, P = {}> = {
-  type: T;
-  [key: string]: any;
-} & P;
+
 
 type SelectHandCardAction = Action<
   "SELECT_HAND_CARD",
@@ -64,7 +62,7 @@ export const getInitState = (matches: MatchesInClient) => ({
   matches,
 });
 
-export const reducer = (state: InitState, action: Action) => {
+export const reducer = (state: InitState, action: Action<ActionType>) => {
   switch (action.type) {
     case "RESET_HAND_CARD_SELECT":
       return {

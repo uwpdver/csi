@@ -38,12 +38,23 @@ export type MatchesInClient = Matches & {
   })[];
 };
 
+
+export type InfoCardInClient = InformationCardsOnMatches & {
+  informationCard: InformationCard & {
+    list: Information[];
+  };
+};
+
+export type MeasureCardInClient = MeasureCardsOnPlayers & {
+  measureCard: MeasureCard;
+};
+
+export type ClueCardInClient = ClueCardsOnPlayers & {
+  clueCard: ClueCard;
+};
+
 export type PlayerInClient = Player & {
   user: User;
-  measureCards: (MeasureCardsOnPlayers & {
-    measureCard: MeasureCard;
-  })[];
-  clueCards: (ClueCardsOnPlayers & {
-    clueCard: ClueCard;
-  })[];
+  measureCards: MeasureCardInClient[];
+  clueCards: ClueCardInClient[];
 };

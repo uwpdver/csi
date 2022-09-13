@@ -1,36 +1,35 @@
-import React, {
-  useReducer,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useReducer, useContext, useEffect, useMemo, useCallback } from "react";
 import type { GetServerSideProps, NextPage } from "next";
 import ReactModal from "react-modal";
-import { InformationCardsOnMatches } from "@prisma/client";
-import { socket, UserInfoContext } from "../_app";
-import { getMatchesById } from "../api/matches/[id]";
+
+import { socket, UserInfoContext } from "pages/_app";
+import { getMatchesById } from "pages/api/matches/[id]";
+
 import InfoCardPane from "@/components/InfoCardPane";
 import HandCardsPanel from "@/components/HandCardsPanel";
 import ReplenishInfoPane from "@/components/ReplenishInfoPane";
+import MatchesFooter from "@/components/MatchesFooter";
+
+import reducer from "@/reducers/index";
+import { InitState, ActionType } from "@/reducers/matches";
+
 import {
-  ACTION_GAME_ADDITIONAL_TESTIMONIALS,
-  ACTION_GAME_PROVIDE_TESTIMONIALS,
   ACTION_GAME_READY,
   BCST_GAME_STATE_UPDATE,
   BCST_GAME_ALL_PLAYER_READY,
 } from "@/constants/index";
+
 import {
   ServerGameAllPlayerReady,
   ServerGameStateUpdate,
 } from "@/types/socket";
-import { MatchesInClient, OptionInClient } from "@/types/client";
+import { MatchesInClient } from "@/types/client";
 import { Phases, PlayerStatus, Role } from "@/types/index";
+
 import { useConnectToRoom } from "@/utils/useConnectToRoom";
-import reducer from "@/reducers/index";
-import { InitState, ActionType } from "@/reducers/matches";
-import MatchesFooter from "@/components/MatchesFooter";
+import { useCountDown } from "@/utils/useCountDown";
+import { useListRef } from "@/utils/useListRef";
+import Avatar from "@/components/Avatar";
 
 interface Props {
   matches: MatchesInClient;
@@ -49,35 +48,19 @@ const MatchesDispatchContext = React.createContext<{
   }>;
 }>({ dispatch: () => {} });
 
-const Matches: NextPage<Props> = (props) => {
+const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
+  useConnectToRoom(roomId);
   const { userInfo } = useContext(UserInfoContext);
-  const [countDown, setCountDown] = useState(0);
+  const [countDown, setCountDown] = useCountDown();
+  const [handCardPaneInstances, appendToListRef] = useListRef();
   const [state, dispatch] = useReducer(
     reducer.matches.reducer,
-    reducer.matches.getInitState(props.matches)
+    reducer.matches.getInitState(matches)
   );
   const {
-    matches: {
-      players,
-      informationCards,
-      phases,
-      rounds,
-      currentPlayerIndex,
-      options,
-    },
+    handCardSelect: { selectedPlayerIndex },
+    matches: { players, phases, rounds, currentPlayerIndex },
   } = state;
-  const listRef = useRef<(HTMLElement | null)[]>([]);
-
-  const { roomId, matchesId } = props;
-
-  useConnectToRoom(roomId);
-
-  const selfIndex = useMemo(
-    () => players.findIndex((player) => player.userId === userInfo?.userId),
-    [players, userInfo?.userId]
-  );
-
-  const self = players[selfIndex];
 
   const playersCanSolve = useMemo(
     () => players.filter((play) => play.role !== Role.Witness),
@@ -95,45 +78,21 @@ const Matches: NextPage<Props> = (props) => {
     "游戏结束 凶手获得胜利",
   ];
 
-  const defaultOptions = options.map((option) => ({
-    weight: option.optionWeight,
-    indexOnCard: option.indexOnCard ?? -1,
-  }));
-
-  const isPointOutInfo = useMemo(
-    () =>
-      [Phases.ProvideTestimonials, Phases.AdditionalTestimonials].includes(
-        phases
-      ) && self?.role === Role.Witness,
-    [phases, self?.role]
+  const self = useMemo(
+    () => players.find((player) => player.userId === userInfo?.userId),
+    [players, userInfo?.userId]
   );
 
-  const murder = players.find((player) => player.role === Role.Murderer);
-
   const scrollHandCardToView = (index: number) => {
-    if (listRef && Array.isArray(listRef.current)) {
-      const instance = listRef.current[index];
-      if (instance) {
-        instance.scrollIntoView({
-          behavior: "smooth",
-          inline: "start",
-          block: "nearest",
-        });
-      }
+    const instance = handCardPaneInstances[index];
+    if (instance) {
+      instance.scrollIntoView({
+        behavior: "smooth",
+        inline: "start",
+        block: "nearest",
+      });
     }
   };
-
-  useEffect(() => {
-    let timeoutHandle: any = null;
-    if (countDown > 0) {
-      timeoutHandle = setTimeout(() => {
-        setCountDown(Math.max(countDown - 1, 0));
-      }, 1000);
-    }
-    return () => {
-      clearTimeout(timeoutHandle);
-    };
-  }, [countDown]);
 
   // 开始倒计时
   useEffect(() => {
@@ -179,51 +138,13 @@ const Matches: NextPage<Props> = (props) => {
     return null;
   }
 
-  const selectPlayerId =
-    playersCanSolve[state.handCardSelect.selectedPlayerIndex]?.id;
-
-  // 点击确认按钮
-  const handleConfirmPointOut = (options: OptionInClient[]) => {
-    socket.emit(ACTION_GAME_PROVIDE_TESTIMONIALS, {
-      userId: userInfo?.userId,
-      roomId,
-      matchesId,
-      options,
-    });
-  };
-
-  // [补充信息弹窗]点击确认按钮
-  const handleConfirmReplenishInfo = (
-    informationCards: Omit<InformationCardsOnMatches, "matcheId">[],
-    options: OptionInClient[]
-  ) => {
-    socket.emit(ACTION_GAME_ADDITIONAL_TESTIMONIALS, {
-      userId: userInfo?.userId,
-      roomId,
-      matchesId,
-      options,
-      informationCards,
-    });
-  };
-
-  // [补充信息弹窗]点击放弃按钮
-  const handleQuitReplenishInfo = (
-    informationCards: Omit<InformationCardsOnMatches, "matcheId">[]
-  ) => {
-    socket.emit(ACTION_GAME_ADDITIONAL_TESTIMONIALS, {
-      userId: userInfo?.userId,
-      roomId,
-      matchesId,
-      options: [],
-      informationCards: informationCards,
-    });
-  };
-
-  const getMatchesState = (callback: (state: InitState) => any) =>
-    callback(state);
-
   return (
-    <MatchesStateContext.Provider value={{ getMatchesState }}>
+    <MatchesStateContext.Provider
+      value={{
+        getMatchesState: (callback: (state: InitState) => any) =>
+          callback(state),
+      }}
+    >
       <MatchesDispatchContext.Provider value={{ dispatch }}>
         <div className="px-4 min-h-screen flex flex-col">
           <ReactModal
@@ -233,13 +154,10 @@ const Matches: NextPage<Props> = (props) => {
             overlayClassName="fixed inset-0 backdrop-blur-sm bg-white bg-opacity-75"
           >
             <ReplenishInfoPane
-              defaultOptions={defaultOptions}
-              isHidden={phases < Phases.ProvideTestimonials}
-              defaultInformationCards={informationCards}
-              isPointOutInfo={isPointOutInfo}
-              onComfirm={handleConfirmReplenishInfo}
-              onQuit={handleQuitReplenishInfo}
-              role={self?.role || Role.Detective}
+              userId={userInfo.userId}
+              roomId={roomId}
+              matchesId={matchesId}
+              self={self}
             />
           </ReactModal>
 
@@ -250,11 +168,10 @@ const Matches: NextPage<Props> = (props) => {
           </div>
 
           <InfoCardPane
-            defaultOptions={defaultOptions}
-            isHidden={phases < Phases.ProvideTestimonials}
-            informationCards={informationCards.slice(0, 6)}
-            isPointOutInfo={isPointOutInfo}
-            onComfirm={handleConfirmPointOut}
+            userId={userInfo.userId}
+            roomId={roomId}
+            matchesId={matchesId}
+            self={self}
           />
 
           <ul className="flex flex-nowrap space-x-4 mt-4 py-2 w-full overflow-x-scroll snap-x">
@@ -262,17 +179,13 @@ const Matches: NextPage<Props> = (props) => {
               <li
                 className="shrink-0 basis-full snap-center"
                 key={player.id}
-                ref={(ref) => {
-                  if (listRef && Array.isArray(listRef.current)) {
-                    listRef.current[index] = ref;
-                  }
-                }}
+                ref={appendToListRef.bind(null, index)}
               >
                 <HandCardsPanel
-                  isSelf={self.id === player.id}
+                  isSelf={self?.id === player.id}
                   player={player}
                   index={index}
-                  selectPlayerId={selectPlayerId}
+                  selectPlayerId={playersCanSolve[selectedPlayerIndex]?.id}
                 />
               </li>
             ))}
@@ -282,10 +195,9 @@ const Matches: NextPage<Props> = (props) => {
             {playersCanSolve.map((player, index) => (
               <li
                 key={player.id}
-                className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center"
                 onClick={scrollHandCardToView.bind(null, index)}
               >
-                {player.user.name?.slice(0, 1)}
+                <Avatar nickname={player.user.name}/>
               </li>
             ))}
           </ul>
@@ -295,7 +207,6 @@ const Matches: NextPage<Props> = (props) => {
           <div className="sticky bottom-0 bg-white z-10 border-t border-t-black">
             <div className="flex items-center  py-2 space-x-2 h-16">
               <MatchesFooter
-                murder={murder}
                 self={self}
                 curSpeakerId={playersCanSolve[currentPlayerIndex].id}
               />
@@ -311,7 +222,9 @@ type useSelectorType<S = any> = (cb: (state: InitState) => S) => S;
 
 export function useSelector<S = any>(callback: (state: InitState) => S): S {
   const { getMatchesState } = useContext(MatchesStateContext);
-  return getMatchesState(callback);
+  const cb = useCallback(callback, []);
+  const selected = useMemo(()=>getMatchesState(cb), [cb, getMatchesState])
+  return selected;
 }
 
 export const useDispatch = () => {

@@ -23,6 +23,6 @@
       "@/reducers/*": ["reducers/*"],
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "components/Optiontsx"],
   "exclude": ["node_modules"]
 }
