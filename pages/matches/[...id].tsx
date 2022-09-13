@@ -1,4 +1,10 @@
-import React, { useReducer, useContext, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useReducer,
+  useContext,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import type { GetServerSideProps, NextPage } from "next";
 import ReactModal from "react-modal";
 
@@ -59,7 +65,7 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
   );
   const {
     handCardSelect: { selectedPlayerIndex },
-    matches: { players, phases, rounds, currentPlayerIndex },
+    matches: { players, phases, rounds, currentPlayerIndex, measure, clue },
   } = state;
 
   const playersCanSolve = useMemo(
@@ -67,21 +73,25 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
     [players]
   );
 
+  const self = useMemo(
+    () => players.find((player) => player.userId === userInfo?.userId),
+    [players, userInfo?.userId]
+  );
+
   const phasesToTitleMap = [
     `开局阶段 ${countDown ? `${countDown}秒后开始行凶` : ""}`,
     "凶手正在行凶",
-    "目击者正在提供证词",
+    `${
+      self?.role === Role.Witness
+        ? `凶手选择了: ${measure} 和 ${clue}`
+        : "目击者正在提供证词"
+    }`,
     `推理阶段-第${rounds}轮-${playersCanSolve[currentPlayerIndex].user.name}的回合`,
     "帮凶正在行动",
     "目击证人正在补充证词",
     "游戏结束 侦探获得胜利",
     "游戏结束 凶手获得胜利",
   ];
-
-  const self = useMemo(
-    () => players.find((player) => player.userId === userInfo?.userId),
-    [players, userInfo?.userId]
-  );
 
   const scrollHandCardToView = (index: number) => {
     const instance = handCardPaneInstances[index];
@@ -108,6 +118,18 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
       dispatch({ type: "START_SELECT_HAND_CARD", selectFor: "murder" });
     }
   }, [phases, self?.role]);
+
+  useEffect(() => {
+    if (phases === Phases.AdditionalTestimonials) {
+      dispatch({ type: "SYNC_REPLENISH_INFO" });
+    }
+  }, [phases]);
+
+  useEffect(() => {
+    if (phases === Phases.Reasoning && rounds === 2) {
+      dispatch({ type: "POINT_OUT_INFO_SYNC" });
+    }
+  }, [phases, rounds]);
 
   useEffect(() => {
     if (self?.id && roomId && self.status === PlayerStatus.NotReady) {
@@ -146,11 +168,11 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
       }}
     >
       <MatchesDispatchContext.Provider value={{ dispatch }}>
-        <div className="px-4 min-h-screen flex flex-col">
+        <div className="px-4 min-h-screen flex flex-col bg-gray-200">
           <ReactModal
             isOpen={phases === Phases.AdditionalTestimonials}
             preventScroll={true}
-            className="p-4 bg-transparent inset-0 absolute pb-20"
+            className="p-4 bg-transparent inset-0 absolute"
             overlayClassName="fixed inset-0 backdrop-blur-sm bg-white bg-opacity-75"
           >
             <ReplenishInfoPane
@@ -167,12 +189,7 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
             </header>
           </div>
 
-          <InfoCardPane
-            userId={userInfo.userId}
-            roomId={roomId}
-            matchesId={matchesId}
-            self={self}
-          />
+          <InfoCardPane self={self} />
 
           <ul className="flex flex-nowrap space-x-4 mt-4 py-2 w-full overflow-x-scroll snap-x">
             {playersCanSolve.map((player, index) => (
@@ -197,14 +214,14 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
                 key={player.id}
                 onClick={scrollHandCardToView.bind(null, index)}
               >
-                <Avatar nickname={player.user.name}/>
+                <Avatar className="shadow-md" nickname={player.user.name} />
               </li>
             ))}
           </ul>
 
-          <div className="w-full h-72"></div>
+          <div className="w-full h-24"></div>
 
-          <div className="sticky bottom-0 bg-white z-10 border-t border-t-black">
+          <div className="sticky bottom-0 bg-gray-200 z-10 border-t border-t-black">
             <div className="flex items-center  py-2 space-x-2 h-16">
               <MatchesFooter
                 self={self}
@@ -223,7 +240,7 @@ type useSelectorType<S = any> = (cb: (state: InitState) => S) => S;
 export function useSelector<S = any>(callback: (state: InitState) => S): S {
   const { getMatchesState } = useContext(MatchesStateContext);
   const cb = useCallback(callback, []);
-  const selected = useMemo(()=>getMatchesState(cb), [cb, getMatchesState])
+  const selected = useMemo(() => getMatchesState(cb), [cb, getMatchesState]);
   return selected;
 }
 

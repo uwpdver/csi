@@ -11,6 +11,8 @@ import { socket, UserInfoContext } from "pages/_app";
 import { Phases, Role } from "@/types/index";
 import { PlayerInClient } from "@/types/client";
 import Avatar from "./Avatar";
+import ReplenishInfoFooter from "./ReplenishInfoFooter";
+import PointOutInfoFooter from "./PointOutInfoFooter";
 
 const ROLE_TO_TEXT_MAP = {
   [Role.Witness]: "目击者",
@@ -114,10 +116,18 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
     router.replace(`/room/${roomId}`);
   };
 
+  if (self?.role === Role.Witness && phases === Phases.ProvideTestimonials) {
+    return <PointOutInfoFooter />;
+  }
+
+  if (phases === Phases.AdditionalTestimonials && self?.role === Role.Witness) {
+    return <ReplenishInfoFooter />;
+  }
+
   if (phases === Phases.DetectiveWin || phases === Phases.MurdererWin) {
     return (
       <>
-        <div className="flex-1">
+        <div className="flex-1 text-sm">
           <div>
             凶手是：<span className="font-bold">{murder?.user.name}</span>
           </div>
@@ -157,9 +167,7 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
             {self ? ROLE_TO_TEXT_MAP[self.role as Role] : ""}
           </span>
           {self?.role === Role.Murderer && measure && clue ? (
-            <span className="text-sm text-gray-500 ml-4">
-              {`${measure} + ${clue}`}
-            </span>
+            <span className="text-sm ml-2">{`${measure} + ${clue}`}</span>
           ) : null}
         </div>
         {phases === Phases.Reasoning && curSpeakerId === self?.id && (
@@ -171,7 +179,7 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
           </>
         )}
         {phases > Phases.Murder && self?.role === Role.Witness && (
-          <div className="text-right">
+          <div className="text-right text-sm">
             <div>
               凶手是：<span className="font-bold">{murder?.user.name}</span>
             </div>

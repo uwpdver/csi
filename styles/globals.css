@@ -19,16 +19,6 @@ a {
   box-sizing: border-box;
 }
 
-/* @media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-  body {
-    color: white;
-    background: black;
-  }
-} */
-
 input {
   @apply border border-black h-10 px-2;
 }
@@ -38,9 +28,9 @@ input:not(:last-child) {
 }
 
 button:not(.link) {
-  @apply border border-black h-10 px-2;
+  @apply border border-black h-10 px-2 bg-white shadow-md rounded-sm;
 }
 
 .hand-card {
-  @apply border border-black rounded-md aspect-[3/4] text-center p-2;
+  @apply border border-black rounded-md aspect-[3/4] text-center p-2 shadow-md font-serif;
 }

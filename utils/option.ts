@@ -10,4 +10,4 @@ export const createEmptyOptions = (n = 0) =>
     createOption(index + 1)
   );
 
-export const isEmptyOption = (option: OptionInClient) => option.indexOnCard < 0;
+export const isEmptyOption = (option?: OptionInClient) => option && option.indexOnCard < 0;

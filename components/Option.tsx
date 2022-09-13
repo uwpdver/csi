@@ -20,7 +20,7 @@ const Option = ({
     <li
       onClick={onClick}
       className={classnames(
-        "bg-red-600 border border-black h-10 w-10 rounded-full flex items-center justify-center font-bold text-xl text-white",
+        "bg-red-600 border border-black h-10 w-10 rounded-full flex items-center justify-center font-bold text-xl text-white font-serif leading-10 align-middle",
         className,
         {
           [`bg-red-300 ${selectedClassName}`]: isSelected,

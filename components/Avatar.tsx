@@ -11,7 +11,7 @@ const Avatar = ({ nickname = "", className = "" }: Props) => {
     <div
       className={classnames(
         "",
-        "h-10 w-10 mr-2 bg-gray-200 rounded-full flex items-center justify-center",
+        "h-10 w-10 mr-2 bg-gray-100 border border-gray-600 rounded-full flex items-center justify-center",
         className
       )}
     >
