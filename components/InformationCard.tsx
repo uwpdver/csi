@@ -29,48 +29,51 @@ const InformationCard = ({
   return (
     <div
       className={classnames(
-        "overflow-hidden bg-[#eed7b3] relative font-serif rounded-md shadow-md border border-black",
+        "info-card-container relative font-serif transition-transform duration-500",
         className,
         {
           "transition grayscale-[.8]": status === InformationCardStatus.Discard,
         }
       )}
+      style={{
+        transform: isHidden ? "rotateY(180deg)" : "",
+      }}
     >
-      {isHidden && (
-        <div className=" absolute top-0 left-0 w-full h-full bg-[#eed7b3] flex items-center justify-center text-4xl font-bold z-10">
-          ?
+      <div className="info-card-face">
+        <div
+          className="bg-black text-white h-8 leading-8 align-middle"
+          onClick={onClick.bind(null, orginIndex)}
+        >
+          {categoryName}
         </div>
-      )}
-      <div
-        className="bg-black text-white h-8 leading-8 align-middle"
-        onClick={onClick.bind(null, orginIndex)}
-      >
-        {categoryName}
+        <ul className="divide-y divide-black">
+          {list.map((info, subIndex) => {
+            const hasOption = subIndex === option?.indexOnCard;
+            return (
+              <li
+                key={subIndex}
+                className={classnames(
+                  "relative overflow-hidden h-8 leading-8 align-middle",
+                  {
+                    "bg-red-700 text-white": hasOption,
+                  }
+                )}
+                onClick={onClickItem.bind(null, orginIndex, subIndex)}
+              >
+                {hasOption ? (
+                  <div className="absolute left-1 top-50 transform -translate-y-50 opacity-75 text-xl font-bold">
+                    {option?.weight}
+                  </div>
+                ) : null}
+                <div>{info.content}</div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
-      <ul className="divide-y divide-black">
-        {list.map((info, subIndex) => {
-          const hasOption = subIndex === option?.indexOnCard;
-          return (
-            <li
-              key={subIndex}
-              className={classnames(
-                "relative overflow-hidden h-8 leading-8 align-middle",
-                {
-                  "bg-red-700 text-white": hasOption,
-                }
-              )}
-              onClick={onClickItem.bind(null, orginIndex, subIndex)}
-            >
-              {hasOption ? (
-                <div className="absolute left-1 top-50 transform -translate-y-50 opacity-75 text-xl font-bold">
-                  {option?.weight}
-                </div>
-              ) : null}
-              <div>{info.content}</div>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="info-card-face info-card-face-back text-4xl font-bold">
+        ?
+      </div>
     </div>
   );
 };

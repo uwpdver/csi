@@ -34,3 +34,18 @@ button:not(.link) {
 .hand-card {
   @apply border border-black rounded-md aspect-[3/4] text-center p-2 shadow-md font-serif;
 }
+
+.info-card-container {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.info-card-face {
+  @apply bg-[#eed7b3] overflow-hidden rounded-md shadow-md border border-black;
+  -webkit-backface-visibility: hidden;
+}
+
+.info-card-face-back {
+  @apply flex items-center justify-center absolute inset-0;
+  transform: rotateY(180deg);
+}
