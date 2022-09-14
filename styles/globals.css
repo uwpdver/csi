@@ -19,16 +19,29 @@ a {
   box-sizing: border-box;
 }
 
+button[type="submit"] {
+  @apply bg-white;
+}
+
+button {
+  @apply border border-black h-10 px-2 bg-white shadow rounded-sm disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-200 disabled:shadow-none;
+}
+
+.link {
+  color: #836e4d;
+  @apply border-none h-auto px-0 bg-none shadow-none rounded-none disabled:bg-none;
+}
+
 input {
-  @apply border border-black h-10 px-2;
+  @apply border border-black h-10 px-2 rounded-sm;
 }
 
 input:not(:last-child) {
-  @apply border-r-0;
+  @apply border-r-0 rounded-r-none;
 }
 
-button:not(.link) {
-  @apply border border-black h-10 px-2 bg-white shadow-md rounded-sm;
+input + button {
+  @apply shadow-none rounded-l-none;
 }
 
 .hand-card {

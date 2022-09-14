@@ -9,6 +9,7 @@ import { Room } from "@prisma/client";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { getLayout } from "@/components/Layout";
+import HeroImg from "@/components/HeroImg";
 
 interface Props {
   room: Room | null;
@@ -62,20 +63,18 @@ const Home: NextPageWithLayout<Props> = (props) => {
 
   return (
     <>
-      <Header>犯罪现场</Header>
-      <div className="flex items-center mt-2">
-        <div className="flex-1">{userInfo?.nickname}</div>
-        <div className="flex-1 text-center"></div>
-        <div className="flex-1  text-right">
-          {props.room ? (
-            <Link href={`/room/${props.room.id}`}>
-              <a>返回房间</a>
-            </Link>
-          ) : null}
-        </div>
-      </div>
-      <div className="mt-auto mb-32">
-        <form className="flex items-center" onSubmit={handleOnCreateRoom}>
+      <Header title="犯罪现场">
+        {props.room ? (
+          <Link href={`/room/${props.room.id}`}>
+            <a className="link">返回房间</a>
+          </Link>
+        ) : (
+          <div>{userInfo?.nickname}</div>
+        )}
+      </Header>
+      <HeroImg />
+      <div className="mt-auto mb-8">
+        <form className="flex items-center shadow" onSubmit={handleOnCreateRoom}>
           <input
             className="flex-1"
             value={roomName}
@@ -84,14 +83,16 @@ const Home: NextPageWithLayout<Props> = (props) => {
           />
           <button type="submit">创建房间</button>
         </form>
-        <form className="flex items-center mt-4" onSubmit={handleOnJoinRoom}>
+        <form className="flex items-center mt-4 shadow" onSubmit={handleOnJoinRoom}>
           <input
             className="flex-1"
             value={inputedRoomID}
             onChange={handleOnInputChange}
             placeholder="房间号"
           />
-          <button type="submit">加入房间</button>
+          <button className="" type="submit">
+            加入房间
+          </button>
         </form>
       </div>
     </>

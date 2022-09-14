@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import type { GetServerSideProps, NextPage } from "next";
 import ReactModal from "react-modal";
+import classnames from "classnames";
 
 import { socket, UserInfoContext } from "pages/_app";
 import { getMatchesById } from "pages/api/matches/[id]";
@@ -126,7 +127,7 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
   }, [phases]);
 
   useEffect(() => {
-    if (phases === Phases.Reasoning && rounds === 2) {
+    if (phases === Phases.Reasoning && rounds === 1) {
       dispatch({ type: "POINT_OUT_INFO_SYNC" });
     }
   }, [phases, rounds]);
@@ -168,7 +169,7 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
       }}
     >
       <MatchesDispatchContext.Provider value={{ dispatch }}>
-        <div className="px-4 min-h-screen flex flex-col bg-gray-200">
+        <div className="px-4 min-h-screen flex flex-col bg-gray-100">
           <ReactModal
             isOpen={phases === Phases.AdditionalTestimonials}
             preventScroll={true}
@@ -221,7 +222,14 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
 
           <div className="w-full h-24"></div>
 
-          <div className="sticky bottom-0 bg-gray-200 z-10 border-t border-t-black">
+          <div
+            className={classnames(
+              "sticky bottom-0 bg-gray-100 z-10 border-t border-t-black",
+              {
+                "bg-transparent": phases === Phases.AdditionalTestimonials
+              }
+            )}
+          >
             <div className="flex items-center  py-2 space-x-2 h-16">
               <MatchesFooter
                 self={self}

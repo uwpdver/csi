@@ -1,29 +1,36 @@
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import type { GetServerSideProps } from "next";
+import Head from "next/head";
+import Link from "next/link";
 import nookies from "nookies";
+import { useRouter } from "next/router";
+import { NextPageWithLayout, socket, UserInfoContext } from "pages/_app";
+import { prisma } from "../../lib/prisma";
+import { User, Room, UserInRoom } from "@prisma/client";
+
+import { getLayout } from "@/components/Layout";
+import Avatar from "@/components/Avatar";
+import Header from "@/components/Header";
+
+import { getFirstQueryParmse } from "@/utils/getFirstQueryParmse";
+import { useConnectToRoom } from "@/utils/useConnectToRoom";
+
 import {
   ACTION_CREATE_GAME,
   ACTION_ENTER_ROOM,
   ACTION_LEAVE_ROOM,
+  ACTION_CHANGE_READY_STATE,
   BCST_CHANGE_READY_STATE,
   BCST_GAME_DESTROYED,
   BCST_START_GAME,
   BCST_UPDATE_USERS_IN_ROOM,
 } from "@/constants/index";
-import { NextPageWithLayout, socket, UserInfoContext } from "../_app";
-import { useRouter } from "next/router";
-import { getFirstQueryParmse } from "@/utils/getFirstQueryParmse";
-import { prisma } from "../../lib/prisma";
-import { User, Room, UserInRoom } from "@prisma/client";
-import { ACTION_CHANGE_READY_STATE } from "@/constants/index";
+
 import {
   ServerChangeReadyStateHander,
   ServerStartGameHander,
   ServerUpdateUsersInRoom,
 } from "@/types/socket";
-import Link from "next/link";
-import { useConnectToRoom } from "@/utils/useConnectToRoom";
-import { getLayout } from "@/components/Layout";
 
 interface Props {
   data: Room & {
@@ -82,7 +89,7 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
     };
 
     const toMatches: ServerStartGameHander = ({ id }) => {
-      setMatchesId(id)
+      setMatchesId(id);
       router.push(`/matches/${roomId}/${id}`);
     };
 
@@ -130,9 +137,10 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
 
   return (
     <>
-      <header className="text-3xl pt-4">房间号：{roomId}</header>
-      <div className="mt-2 flex items-center">
-        <div className="flex-1"> {data.title}</div>
+      <Head>
+        <title>{`犯罪现场 房间：${roomId}`}</title>
+      </Head>
+      <Header title={`房间号：${roomId}`}>
         {matchesId ? null : (
           <Link href="/">
             <button className="link" onClick={leaveRoom} type="button">
@@ -140,25 +148,28 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
             </button>
           </Link>
         )}
+      </Header>
+      <div className="mt-4 flex items-center">
+        <div className="flex-1"> {data.title}</div>
       </div>
-      <ul className="grid grid-cols-4 gap-4 mt-8">
-        {users.map((user) => (
-          <li key={user.userId}>
-            <div className="flex flex-col items-center">
-              <div className="w-full aspect-square mb-2 flex items-center rounded-full justify-center bg-gray-300 text-3xl">
-                <span>{user.user.name?.slice(0, 1)}</span>
+      <div className="flex-1 mt-4 border border-black shadow-sm rounded-md bg-white">
+        <ul className=" grid grid-cols-4 gap-4 p-4">
+          {users.map((user) => (
+            <li key={user.userId}>
+              <div className="flex flex-col items-center">
+                <Avatar nickname={user.user.name} className="mb-2" size="lg" />
+                <div className="text-center truncate overflow-hidden w-full text-sm">
+                  {userInfo.userId === user.userId ? "自己" : user.user.name}
+                </div>
+                <div className="text-xs">
+                  {user.isReady ? "已准备" : "未准备"}
+                </div>
               </div>
-              <div className="text-center truncate overflow-hidden w-full">
-                {userInfo.userId === user.userId ? "自己" : user.user.name}
-              </div>
-              <div className="text-sm">
-                {user.isReady ? "已准备" : "未准备"}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-auto">
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="mt-4">
         {matchesId ? (
           <Link href={`/matches/${roomId}/${matchesId}`}>
             <button className="w-full">继续进行中的对局</button>
@@ -167,7 +178,7 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
           <>
             {data.hostId === userInfo?.userId && (
               <button
-                className="w-full disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-200"
+                className="w-full "
                 disabled={!canStart}
                 onClick={handleStartBtnClick}
               >

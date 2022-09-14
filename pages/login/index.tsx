@@ -1,15 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
+
 import axios from "../../lib/axios";
-import { LOCAL_STORAGE_KEYS } from "@/constants/index";
-import { NextPageWithLayout, UserInfoContext } from "../_app";
+
+import { NextPageWithLayout, UserInfoContext } from "pages/_app";
+
 import Header from "@/components/Header";
+import HeroImg from "@/components/HeroImg";
 import { getLayout } from "@/components/Layout";
 
-const userId =
-  typeof window !== "undefined"
-    ? localStorage.getItem(LOCAL_STORAGE_KEYS.USER_ID)
-    : "";
+import { LOCAL_STORAGE_KEYS } from "@/constants/index";
 
 const Login: NextPageWithLayout<{}> = () => {
   const [nickname, setNickname] = useState("");
@@ -50,7 +50,6 @@ const Login: NextPageWithLayout<{}> = () => {
       const {
         data: { id, name },
       } = await axios.post("/user/signIn", {
-        id: userId,
         name: nickname,
         email: email,
       });
@@ -66,7 +65,6 @@ const Login: NextPageWithLayout<{}> = () => {
     const {
       data: { id, name },
     } = await axios.post("/user/signUp", {
-      id: userId,
       name: nickname,
       email: email,
     });
@@ -75,8 +73,9 @@ const Login: NextPageWithLayout<{}> = () => {
 
   return (
     <>
-      <Header>犯罪现场</Header>
-      <div className="mt-auto mb-32">
+      <Header title="犯罪现场" />
+      <HeroImg />
+      <div className="mt-auto mb-8">
         {isSignUp ? (
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="flex items-center">
@@ -94,6 +93,10 @@ const Login: NextPageWithLayout<{}> = () => {
           </form>
         ) : (
           <form onSubmit={handleSignIn} className="space-y-4">
+            <div className="text-xs text-gray-400">
+              *
+              本账号仅用于标识用户身份，不设置密码，也不保存任何除邮箱账号外的任何个人数据
+            </div>
             <div className="flex items-center">
               <input
                 className="flex-1"

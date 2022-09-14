@@ -10,7 +10,7 @@ const Layout = ({ children }: Props) => {
 
   return (
     <div
-      className="flex flex-col px-4 pb-4"
+      className="flex flex-col px-4 pb-4 bg-gray-100"
       style={{ minHeight: windowHeight }}
     >
       {children}

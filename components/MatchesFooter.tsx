@@ -163,7 +163,7 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
         <Avatar nickname={self?.user.name} />
         <div className="flex-1">
           <div>{self?.user.name}</div>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-600">
             {self ? ROLE_TO_TEXT_MAP[self.role as Role] : ""}
           </span>
           {self?.role === Role.Murderer && measure && clue ? (
