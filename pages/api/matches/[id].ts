@@ -1,7 +1,7 @@
-import { prisma } from "../../../lib/prisma";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getFirstQueryParmse } from "@/utils/getFirstQueryParmse";
 import { NotFoundError } from "@prisma/client/runtime";
+import { prisma } from "@/lib/prisma";
+import { getFirstQueryParmse } from "@/utils/getFirstQueryParmse";
 
 export const getMatchesById = async (id: number) => {
   const result = await prisma.matches.findUniqueOrThrow({

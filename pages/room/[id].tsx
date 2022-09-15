@@ -2,11 +2,11 @@ import React, { useState, useEffect, useMemo, useContext } from "react";
 import type { GetServerSideProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import nookies from "nookies";
 import { useRouter } from "next/router";
-import { NextPageWithLayout, socket, UserInfoContext } from "pages/_app";
-import { prisma } from "../../lib/prisma";
+import nookies from "nookies";
 import { User, Room, UserInRoom } from "@prisma/client";
+
+import { prisma } from "@/lib/prisma";
 
 import { getLayout } from "@/components/Layout";
 import Avatar from "@/components/Avatar";
@@ -14,6 +14,8 @@ import Header from "@/components/Header";
 
 import { getFirstQueryParmse } from "@/utils/getFirstQueryParmse";
 import { useConnectToRoom } from "@/utils/useConnectToRoom";
+
+import { NextPageWithLayout, socket, UserInfoContext } from "pages/_app";
 
 import {
   ACTION_CREATE_GAME,

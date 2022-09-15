@@ -21,6 +21,7 @@
       "@/utils/*": ["utils/*"],
       "@/types/*": ["types/*"],
       "@/reducers/*": ["reducers/*"],
+      "@/lib/*": ["lib/*"],
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "components/Optiontsx"],

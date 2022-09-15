@@ -1,7 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Server } from "socket.io";
-import { Player } from "@prisma/client";
 import shuffle from "lodash.shuffle";
+import { Player } from "@prisma/client";
+
+import { prisma } from "@/lib/prisma";
+
+import { getRoles } from "@/utils/getRoles";
+import { pickInfoCards } from "@/utils/pickInfoCards";
+
+import { deleteMatchesById, getMatchesById } from "pages/api/matches/[id]";
+
 import {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -9,6 +17,13 @@ import {
   SocketData,
   ClientGameReplenishInformation,
 } from "@/types/socket";
+import {
+  InformationCardStatus,
+  Phases,
+  PlayerStatus,
+  Role,
+} from "@/types/index";
+
 import {
   BCST_UPDATE_USERS_IN_ROOM,
   BCST_CHANGE_READY_STATE,
@@ -31,16 +46,6 @@ import {
   ACTION_DISCONNECT_ROOM,
   BCST_GAME_DESTROYED,
 } from "@/constants/index";
-import { prisma } from "./../../lib/prisma";
-import {
-  InformationCardStatus,
-  Phases,
-  PlayerStatus,
-  Role,
-} from "@/types/index";
-import { getRoles } from "@/utils/getRoles";
-import { pickInfoCards } from "@/utils/pickInfoCards";
-import { deleteMatchesById, getMatchesById } from "./matches/[id]";
 
 type Response = NextApiResponse & {
   socket: NextApiResponse["socket"] & {

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, ReactElement, ReactNode } from "react";
 import type { NextPage } from "next";
-import { io, Socket } from "socket.io-client";
 import type { AppProps } from "next/app";
+import Modal from 'react-modal'
+import { io, Socket } from "socket.io-client";
 import { ServerToClientEvents, ClientToServerEvents } from "@/types/socket";
 import { LOCAL_STORAGE_KEYS } from "@/constants/index";
-import Modal from 'react-modal'
 import "../styles/globals.css";
 
 

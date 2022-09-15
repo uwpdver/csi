@@ -16,6 +16,7 @@ import InfoCardPane from "@/components/InfoCardPane";
 import HandCardsPanel from "@/components/HandCardsPanel";
 import ReplenishInfoPane from "@/components/ReplenishInfoPane";
 import MatchesFooter from "@/components/MatchesFooter";
+import Avatar from "@/components/Avatar";
 
 import reducer from "@/reducers/index";
 import { InitState, ActionType } from "@/reducers/matches";
@@ -36,7 +37,6 @@ import { Phases, PlayerStatus, Role } from "@/types/index";
 import { useConnectToRoom } from "@/utils/useConnectToRoom";
 import { useCountDown } from "@/utils/useCountDown";
 import { useListRef } from "@/utils/useListRef";
-import Avatar from "@/components/Avatar";
 
 interface Props {
   matches: MatchesInClient;

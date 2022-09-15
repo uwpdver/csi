@@ -1,4 +1,3 @@
-
 // 身份
 export enum Role {
   Witness = "Witness",

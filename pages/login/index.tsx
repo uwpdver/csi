@@ -1,15 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
-import axios from "../../lib/axios";
-
-import { NextPageWithLayout, UserInfoContext } from "pages/_app";
+import axios from "@/lib/axios";
 
 import Header from "@/components/Header";
 import HeroImg from "@/components/HeroImg";
 import { getLayout } from "@/components/Layout";
 
 import { LOCAL_STORAGE_KEYS } from "@/constants/index";
+
+import { NextPageWithLayout, UserInfoContext } from "pages/_app";
 
 const Login: NextPageWithLayout<{}> = () => {
   const [nickname, setNickname] = useState("");

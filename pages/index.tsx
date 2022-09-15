@@ -1,15 +1,20 @@
 import React, { useState, useContext } from "react";
 import type { GetServerSideProps } from "next";
-import { useRouter } from "next/router";
-import axios from "./../lib/axios";
-import { NextPageWithLayout, UserInfoContext } from "./_app";
-import { prisma } from "../lib/prisma";
 import nookies from "nookies";
 import { Room } from "@prisma/client";
+
+import { useRouter } from "next/router";
 import Link from "next/link";
+
+import axios from "@/lib/axios";
+import { prisma } from "@/lib/prisma";
+
+
 import Header from "@/components/Header";
 import { getLayout } from "@/components/Layout";
 import HeroImg from "@/components/HeroImg";
+
+import { NextPageWithLayout, UserInfoContext } from "pages/_app";
 
 interface Props {
   room: Room | null;
