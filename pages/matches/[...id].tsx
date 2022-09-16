@@ -6,6 +6,8 @@ import React, {
   useCallback,
 } from "react";
 import type { GetServerSideProps } from "next";
+import { useRouter } from "next/router";
+import Image from "next/image";
 import ReactModal from "react-modal";
 import classnames from "classnames";
 
@@ -30,6 +32,7 @@ import {
   ACTION_GAME_READY,
   BCST_GAME_STATE_UPDATE,
   BCST_GAME_ALL_PLAYER_READY,
+  ACTION_GAME_QUIT,
 } from "@/constants/index";
 
 import {
@@ -66,6 +69,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   useConnectToRoom(roomId);
   const { userInfo } = useContext(UserInfoContext);
   const [countDown, setCountDown] = useCountDown();
+  const router = useRouter();
   const [handCardPaneInstances, appendToListRef] = useListRef();
   const [state, dispatch] = useReducer(
     reducer.matches.reducer,
@@ -87,6 +91,10 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   const self = useMemo(
     () => players.find((player) => player.userId === userInfo?.userId),
     [players, userInfo?.userId]
+  );
+
+  const murder = state.matches.players.find(
+    (player) => player.role === Role.Murderer
   );
 
   const phasesToTitleMap = [
@@ -246,20 +254,33 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
         steps: [
           {
             element: '[data-intro-id="matches-footer"]',
-            intro: <p>现在是你的回合，你在自己的回合阐述你的推理和猜测来帮助所有侦探找出真相。</p>,
+            intro: (
+              <p>
+                现在是你的回合，你在自己的回合阐述你的推理和猜测来帮助所有侦探找出真相。
+              </p>
+            ),
           },
           {
             element: '[data-intro-id="solve-case-btn"]',
             intro: (
               <>
-                <p>点击<b>【破案】</b>来使用你<b>全场唯一</b>的一次<b>【破案】</b>机会。</p>
-                <p>如果指认结果正确，侦探将获得本场游戏的<b>胜利。</b></p>
+                <p>
+                  点击<b>【破案】</b>来使用你<b>全场唯一</b>的一次
+                  <b>【破案】</b>机会。
+                </p>
+                <p>
+                  如果指认结果正确，侦探将获得本场游戏的<b>胜利。</b>
+                </p>
               </>
             ),
           },
           {
             element: '[data-intro-id="end-my-turn-btn"]',
-            intro: <p>点击<b>【结束回合】</b>可以结束自己的回合，由下一位玩家行动。</p>,
+            intro: (
+              <p>
+                点击<b>【结束回合】</b>可以结束自己的回合，由下一位玩家行动。
+              </p>
+            ),
           },
         ],
       });
@@ -275,7 +296,11 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
           // 选中的新场景卡应该由选中的样式
           {
             element: '[data-intro-id="hand-cards-container"]',
-            intro: <p>指出你怀疑的 <b>【手段卡】</b>和<b>【线索卡】</b></p>,
+            intro: (
+              <p>
+                指出你怀疑的 <b>【手段卡】</b>和<b>【线索卡】</b>
+              </p>
+            ),
           },
         ],
       });
@@ -320,7 +345,11 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
         steps: [
           {
             element: '[data-intro-id="replenish-info-footer__options"]',
-            intro: <p>被替换的信息卡上的选项物会被重置，你可以点击指示物，然后将其重新放置在刚换上的信息卡的词条上。</p>,
+            intro: (
+              <p>
+                被替换的信息卡上的选项物会被重置，你可以点击指示物，然后将其重新放置在刚换上的信息卡的词条上。
+              </p>
+            ),
           },
           {
             element: '[data-intro-id="replenish-info-footer__reset-btn"]',
@@ -336,6 +365,13 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
       socket.emit(ACTION_GAME_READY, self.id, roomId, matchesId);
     }
     dispatch({ type: "CLOSE_WELCOME_MODAL" });
+  };
+
+  const handleQuitMatchesBtnClick = () => {
+    if (self) {
+      socket.emit(ACTION_GAME_QUIT, self.id, roomId, matchesId);
+    }
+    router.replace(`/room/${roomId}`);
   };
 
   if (!userInfo) {
@@ -364,6 +400,63 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
               matchesId={matchesId}
               self={self}
             />
+          </ReactModal>
+          <ReactModal
+            isOpen={
+              Phases.DetectiveWin === phases || Phases.MurdererWin === phases
+            }
+            style={{
+              content: {
+                background: "none",
+                border: "none",
+                inset: 0,
+              },
+              overlay: {
+                backgroundColor: "rgba(0,0,0,0.75)",
+                zIndex: 99,
+                backdropFilter: "blur(4px)"
+              },
+            }}
+          >
+            <div className="text-center">
+              <div className="m-4 text-yellow-100 text-xl -mb-8">
+                <div>{`凶手是：${murder?.user.name}`}</div>
+                <div>{`选择了：【${measure}】和【${clue}】`}</div>
+              </div>
+              <Image
+                src="/images/confetti_ball_3d.png"
+                alt=""
+                width={200}
+                height={200}
+              />
+              <Image
+                src={
+                  Phases.DetectiveWin === phases
+                    ? "/images/detective_3d_default.png"
+                    : "/images/bust_in_silhouette_3d.png"
+                }
+                alt=""
+                width={200}
+                height={200}
+              />
+              <div
+                className={classnames(
+                  "text-3xl text-yellow-100 h-16 rounded-full flex items-center font-bold justify-center w-fit mx-auto px-10 -mt-5 min-w-[240px]",
+                  {
+                    "bg-blue-400": Phases.DetectiveWin === phases,
+                    "bg-gray-800": Phases.DetectiveWin !== phases,
+                  }
+                )}
+              >
+                {Phases.DetectiveWin === phases ? "侦探胜利" : "凶手胜利"}
+              </div>
+              <button
+                className="mt-4 h-16 min-w-[240px] rounded-full text-2xl"
+                onClick={handleQuitMatchesBtnClick}
+              >
+                退出对局
+              </button>
+            </div>
           </ReactModal>
           <MatchesWelcomeModal
             isOpen={isWelcomeModalOpen}

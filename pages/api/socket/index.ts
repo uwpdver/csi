@@ -557,14 +557,16 @@ const SocketHandler = (req: NextApiRequest, res: Response) => {
       // 结束本次发言
       socket.on(
         ACTION_GAME_NEXT_SPEAKER,
-        async ({ userId, roomId, matchesId }) => {
+        async ({ userId, roomId, matchesId, ...payload }) => {
           const matches = await prisma.matches.findUniqueOrThrow({
             where: { id: matchesId },
             include: {
               players: true,
             },
           });
-          const { currentPlayerIndex, players, rounds } = matches;
+          const { currentPlayerIndex, players, rounds, phases } = matches;
+          if (phases !== Phases.Reasoning) return null;
+          if (payload.currentPlayerIndex !== currentPlayerIndex) return null;
           const isLastSpeaker = currentPlayerIndex === players.length - 2;
           const data: {
             phases?: Phases;

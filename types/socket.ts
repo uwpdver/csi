@@ -93,6 +93,7 @@ export type ClientGameNextSpeaker = (data: {
   userId: number;
   roomId: number;
   matchesId: number;
+  currentPlayerIndex: number;
 }) => void;
 
 export type ClientGameSolveCase = (data: {

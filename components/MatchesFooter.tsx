@@ -35,6 +35,7 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
     murder,
     phases,
     measure,
+    currentPlayerIndex,
     clue,
     canSelect,
     selectedMeasure,
@@ -51,6 +52,7 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
       phases: state.matches.phases,
       clue: state.matches.clue,
       measure: state.matches.measure,
+      currentPlayerIndex: state.matches.currentPlayerIndex,
       canSelect: state.handCardSelect.canSelect,
       selectedMeasure: state.handCardSelect.selectedMeasure,
       selectedClue: state.handCardSelect.selectedClue,
@@ -105,6 +107,7 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
       userId: userInfo.userId,
       roomId,
       matchesId: matchesId,
+      currentPlayerIndex,
     });
   };
 
@@ -123,23 +126,8 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
   if (phases === Phases.AdditionalTestimonials && self?.role === Role.Witness) {
     return <ReplenishInfoFooter />;
   }
-
-  if (phases === Phases.DetectiveWin || phases === Phases.MurdererWin) {
-    return (
-      <>
-        <div className="flex-1 text-sm">
-          <div>
-            凶手是：<span className="font-bold">{murder?.user.name}</span>
-          </div>
-          <div>
-            选择了：<span className="font-bold">{measure}</span> 和{" "}
-            <span className="font-bold">{clue}</span>
-          </div>
-        </div>
-        <button onClick={handleQuitMatchesBtnClick}>退出对局</button>
-      </>
-    );
-  } else if (canSelect) {
+  
+  if (canSelect) {
     return (
       <>
         <Avatar nickname={self?.user.name} />
@@ -173,7 +161,7 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
         {phases === Phases.Reasoning && curSpeakerId === self?.id && (
           <>
             {self.remainingNumOfSolveCase > 0 && (
-              <button data-intro-id="solve-case-btn" onClick={handleSolve} >
+              <button data-intro-id="solve-case-btn" onClick={handleSolve}>
                 破案
               </button>
             )}

@@ -27,7 +27,9 @@ const MatchesIntro = ({}: Props) => {
         showBullets: false,
         hidePrev: true,
         exitOnOverlayClick: false,
+        prevLabel: "上一步",
         nextLabel: "下一步",
+        doneLabel: "知道了",
       }}
     />
   );
