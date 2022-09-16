@@ -6,10 +6,7 @@ interface Size {
 }
 
 export const useWindowSize = () => {
-  const [windowSize, setWindowSize] = useState<Size>({
-    width: 0,
-    height: 0,
-  });
+  const [windowSize, setWindowSize] = useState<Size>({ width: 0, height: 0 });
 
   const setSize = useCallback(
     () =>
@@ -22,8 +19,9 @@ export const useWindowSize = () => {
 
   useEffect(() => {
     setSize();
+    window.addEventListener("resize", setSize);
     return () => {
-      window.addEventListener("resize", setSize);
+      window.removeEventListener("resize", setSize);
     };
   }, [setSize]);
 

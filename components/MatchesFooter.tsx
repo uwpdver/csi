@@ -144,12 +144,12 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
       <>
         <Avatar nickname={self?.user.name} />
         <div className="flex-1">
-          <span className="font-bold">
+          <div className="font-bold">
             {Phases.Murder === phases && self?.role === Role.Murderer
               ? "行凶："
               : "破案："}
-          </span>
-          {`你选择了 ${selectedMeasure} 和 ${selectedClue}`}
+          </div>
+          <div className="text-sm">{`你选择了 ${selectedMeasure} 和 ${selectedClue}`}</div>
         </div>
         <button onClick={handleComfirmSolve}>确认</button>
         {selectFor === "solveCase" && (
@@ -173,9 +173,13 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
         {phases === Phases.Reasoning && curSpeakerId === self?.id && (
           <>
             {self.remainingNumOfSolveCase > 0 && (
-              <button onClick={handleSolve}>破案</button>
+              <button data-intro-id="solve-case-btn" onClick={handleSolve} >
+                破案
+              </button>
             )}
-            <button onClick={handleEndTheTurn}>结束回合</button>
+            <button data-intro-id="end-my-turn-btn" onClick={handleEndTheTurn}>
+              结束回合
+            </button>
           </>
         )}
         {phases > Phases.Murder && self?.role === Role.Witness && (

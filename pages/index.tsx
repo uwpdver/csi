@@ -9,12 +9,12 @@ import Link from "next/link";
 import axios from "@/lib/axios";
 import { prisma } from "@/lib/prisma";
 
-
 import Header from "@/components/Header";
 import { getLayout } from "@/components/Layout";
 import HeroImg from "@/components/HeroImg";
 
 import { NextPageWithLayout, UserInfoContext } from "pages/_app";
+import SiteFooter from "@/components/SiteFooter";
 
 interface Props {
   room: Room | null;
@@ -68,7 +68,7 @@ const Home: NextPageWithLayout<Props> = (props) => {
 
   return (
     <>
-      <Header title="犯罪现场">
+      <Header className="mx-4" title="犯罪现场">
         {props.room ? (
           <Link href={`/room/${props.room.id}`}>
             <a className="link">返回房间</a>
@@ -77,9 +77,15 @@ const Home: NextPageWithLayout<Props> = (props) => {
           <div>{userInfo?.nickname}</div>
         )}
       </Header>
-      <HeroImg />
-      <div className="mt-auto mb-8">
-        <form className="flex items-center shadow" onSubmit={handleOnCreateRoom}>
+
+      <HeroImg className="mx-4" />
+
+      {/* 底部命令栏 */}
+      <div className="mt-auto mx-4">
+        <form
+          className="flex items-center shadow"
+          onSubmit={handleOnCreateRoom}
+        >
           <input
             className="flex-1"
             value={roomName}
@@ -88,7 +94,10 @@ const Home: NextPageWithLayout<Props> = (props) => {
           />
           <button type="submit">创建房间</button>
         </form>
-        <form className="flex items-center mt-4 shadow" onSubmit={handleOnJoinRoom}>
+        <form
+          className="flex items-center mt-4 shadow"
+          onSubmit={handleOnJoinRoom}
+        >
           <input
             className="flex-1"
             value={inputedRoomID}
@@ -100,6 +109,7 @@ const Home: NextPageWithLayout<Props> = (props) => {
           </button>
         </form>
       </div>
+      <SiteFooter className="mx-4 mt-8" />
     </>
   );
 };

@@ -5,11 +5,11 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
-import type { GetServerSideProps, NextPage } from "next";
+import type { GetServerSideProps } from "next";
 import ReactModal from "react-modal";
 import classnames from "classnames";
 
-import { socket, UserInfoContext } from "pages/_app";
+import { NextPageWithLayout, socket, UserInfoContext } from "pages/_app";
 import { getMatchesById } from "pages/api/matches/[id]";
 
 import InfoCardPane from "@/components/InfoCardPane";
@@ -17,9 +17,14 @@ import HandCardsPanel from "@/components/HandCardsPanel";
 import ReplenishInfoPane from "@/components/ReplenishInfoPane";
 import MatchesFooter from "@/components/MatchesFooter";
 import Avatar from "@/components/Avatar";
+import { getLayout } from "@/components/Layout";
 
 import reducer from "@/reducers/index";
-import { InitState, ActionType } from "@/reducers/matches";
+import {
+  InitState,
+  ActionType,
+  savaIntroCompletedKeysToStorage,
+} from "@/reducers/matches";
 
 import {
   ACTION_GAME_READY,
@@ -37,6 +42,7 @@ import { Phases, PlayerStatus, Role } from "@/types/index";
 import { useConnectToRoom } from "@/utils/useConnectToRoom";
 import { useCountDown } from "@/utils/useCountDown";
 import { useListRef } from "@/utils/useListRef";
+import MatchesIntro from "@/components/MatchesIntro";
 
 interface Props {
   matches: MatchesInClient;
@@ -55,7 +61,7 @@ const MatchesDispatchContext = React.createContext<{
   }>;
 }>({ dispatch: () => {} });
 
-const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
+const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   useConnectToRoom(roomId);
   const { userInfo } = useContext(UserInfoContext);
   const [countDown, setCountDown] = useCountDown();
@@ -65,8 +71,10 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
     reducer.matches.getInitState(matches)
   );
   const {
-    handCardSelect: { selectedPlayerIndex },
+    replenishPane: { optionsNotSet },
+    handCardSelect: { selectedPlayerIndex, selectFor, canSelect },
     matches: { players, phases, rounds, currentPlayerIndex, measure, clue },
+    intro: { completedKeys },
   } = state;
 
   const playersCanSolve = useMemo(
@@ -149,13 +157,200 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
   }, []);
 
   useEffect(() => {
+    if(Object.keys(completedKeys).length!== 0){
+      savaIntroCompletedKeysToStorage(completedKeys);
+    }
+  }, [completedKeys]);
+
+  useEffect(() => {
     if (phases === Phases.Murder && self?.role === Role.Murderer) {
       const index = playersCanSolve.findIndex(
         (player) => player.role === Role.Murderer
       );
       scrollHandCardToView(index);
+      setTimeout(
+        () =>
+          dispatch({
+            type: "INTRO_SHOW",
+            key: "intro_murder",
+            steps: [
+              {
+                element: '[data-intro-id="hand-cards-container"]',
+                intro: "选择一张手法牌（红色）和一张线索牌（白色）",
+              },
+            ],
+          }),
+        500
+      );
     }
   }, [phases, playersCanSolve, self?.role]);
+
+  useEffect(() => {
+    if (phases === Phases.ProvideTestimonials && self?.role === Role.Witness) {
+      dispatch({
+        type: "INTRO_SHOW",
+        key: "intro_pointout",
+        steps: [
+          {
+            element: '[data-intro-id="matches-footer"]',
+            intro: "点击红色指示物",
+          },
+          {
+            element: '[data-intro-id="info-cards-container"]',
+            intro: "点击与之对应的信息词条",
+          },
+          {
+            element: '[data-intro-id="info-cards-container"]',
+            intro: "将所有的指示物都放置在信息卡的词条上",
+          },
+        ],
+      });
+    }
+  }, [phases, self?.role]);
+
+  const isAllSetted = state.pointOutInfo.optionsNotSet.length === 0;
+
+  useEffect(() => {
+    if (
+      isAllSetted &&
+      self?.role === Role.Witness &&
+      phases === Phases.ProvideTestimonials
+    ) {
+      dispatch({
+        type: "INTRO_SHOW",
+        key: "intro_pointout_comfirm",
+        steps: [
+          {
+            element: '[data-intro-id="comfirm-pointout-btn"]',
+            intro: "点击确定来完成指证",
+            position: "top",
+          },
+        ],
+      });
+    }
+  }, [isAllSetted, self, phases]);
+
+  useEffect(() => {
+    if (
+      self?.id === playersCanSolve[currentPlayerIndex].id &&
+      self?.role !== Role.Witness &&
+      phases === Phases.Reasoning &&
+      rounds === 1
+    ) {
+      dispatch({
+        type: "INTRO_SHOW",
+        key: "intro_pointout_comfirm",
+        steps: [
+          {
+            element: '[data-intro-id="matches-footer"]',
+            intro: (
+              <p>
+                现在是你的回合，你在自己的回合阐述你的推理和猜测来帮助所有侦探找出真相。
+              </p>
+            ),
+          },
+          {
+            element: '[data-intro-id="solve-case-btn"]',
+            intro: (
+              <>
+                <p>
+                  点击<b>【破案】</b>来使用你
+                  <b>全场唯一</b>
+                  的一次<b>【破案】</b>
+                  机会。
+                </p>
+                <p>
+                  如果指认结果正确，侦探将获得本场游戏的<b>胜利。</b>
+                </p>
+              </>
+            ),
+          },
+          {
+            element: '[data-intro-id="end-my-turn-btn"]',
+            intro: (
+              <p>
+                点击<b>【结束回合】</b>可以结束自己的回合，由下一位玩家行动。
+              </p>
+            ),
+          },
+        ],
+      });
+    }
+  }, [self, phases, rounds, currentPlayerIndex, playersCanSolve]);
+
+  useEffect(() => {
+    if (canSelect && selectFor === "solveCase") {
+      dispatch({
+        type: "INTRO_SHOW",
+        key: "intro_additional_testimonials",
+        steps: [
+          // 选中的新场景卡应该由选中的样式
+          {
+            element: '[data-intro-id="hand-cards-container"]',
+            intro: (
+              <p>
+                指出你怀疑的 <b>【手段卡】</b>和<b>【线索卡】</b>
+              </p>
+            ),
+          },
+        ],
+      });
+    }
+  }, [canSelect, selectFor]);
+
+  useEffect(() => {
+    if (
+      self?.role === Role.Witness &&
+      phases === Phases.AdditionalTestimonials &&
+      rounds === 2
+    ) {
+      dispatch({
+        type: "INTRO_SHOW",
+        key: "intro_additional_testimonials",
+        steps: [
+          // 选中的新场景卡应该由选中的样式
+          {
+            element: '[data-intro-id="new-info-cards-container"]',
+            intro: (
+              <p>这里是新增的场景卡，点击该区域信息卡片顶部的名字来选择该卡</p>
+            ),
+          },
+          {
+            element: '[data-intro-id="replaceable-info-cards-container"]',
+            intro: <p>再次点击该区域信息卡片顶部的名字来替换掉一张卡</p>,
+          },
+        ],
+      });
+    }
+  }, [self, phases, rounds]);
+
+  useEffect(() => {
+    if (
+      self?.role === Role.Witness &&
+      phases === Phases.AdditionalTestimonials &&
+      optionsNotSet.length !== 0
+    ) {
+      dispatch({
+        type: "INTRO_SHOW",
+        key: "intro_additional_testimonials_reset_option",
+        steps: [
+          // 选中的新场景卡应该由选中的样式
+          {
+            element: '[data-intro-id="replenish-info-footer__options"]',
+            intro: (
+              <p>
+                被替换的信息卡上的选项物会被重置，你可以点击指示物，然后将其重新放置在刚换上的信息卡的词条上。
+              </p>
+            ),
+          },
+          {
+            element: '[data-intro-id="replenish-info-footer__reset-btn"]',
+            intro: <p>如果你对替换的结果不满意，可以点击撤销重新替换。</p>,
+          },
+        ],
+      });
+    }
+  }, [self, phases, optionsNotSet]);
 
   if (!userInfo) {
     return null;
@@ -169,7 +364,8 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
       }}
     >
       <MatchesDispatchContext.Provider value={{ dispatch }}>
-        <div className="px-4 min-h-screen flex flex-col bg-gray-100">
+        <>
+          {self && <MatchesIntro self={self} />}
           <ReactModal
             isOpen={phases === Phases.AdditionalTestimonials}
             preventScroll={true}
@@ -184,60 +380,69 @@ const Matches: NextPage<Props> = ({ roomId, matchesId, matches }) => {
             />
           </ReactModal>
 
-          <div className="pt-4">
-            <header className="text-center mb-2 truncate overflow-hidden">
-              {phasesToTitleMap[phases]}
-            </header>
+          {/* 顶部标题栏 */}
+          <header className="text-center mt-2 mx-4 mb-2 truncate overflow-hidden">
+            {phasesToTitleMap[phases]}
+          </header>
+
+          {/* 内容区域 */}
+          <div className="flex-1 overflow-y-auto pb-16 px-4">
+            <div className="pt-4"></div>
+
+            <InfoCardPane self={self} />
+
+            <ul
+              data-intro-id="hand-cards-container"
+              className="flex flex-nowrap space-x-4 mt-4 py-2 w-full overflow-x-scroll snap-x"
+            >
+              {playersCanSolve.map((player, index) => (
+                <li
+                  className="shrink-0 basis-full snap-center"
+                  key={player.id}
+                  ref={appendToListRef.bind(null, index)}
+                >
+                  <HandCardsPanel
+                    isSelf={self?.id === player.id}
+                    player={player}
+                    index={index}
+                    selectPlayerId={playersCanSolve[selectedPlayerIndex]?.id}
+                  />
+                </li>
+              ))}
+            </ul>
+
+            <ul className="mt-2 mb-8 flex items-center justify-center space-x-4">
+              {playersCanSolve.map((player, index) => (
+                <li
+                  key={player.id}
+                  onClick={scrollHandCardToView.bind(null, index)}
+                >
+                  <Avatar className="shadow-md" nickname={player.user.name} />
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <InfoCardPane self={self} />
-
-          <ul className="flex flex-nowrap space-x-4 mt-4 py-2 w-full overflow-x-scroll snap-x">
-            {playersCanSolve.map((player, index) => (
-              <li
-                className="shrink-0 basis-full snap-center"
-                key={player.id}
-                ref={appendToListRef.bind(null, index)}
-              >
-                <HandCardsPanel
-                  isSelf={self?.id === player.id}
-                  player={player}
-                  index={index}
-                  selectPlayerId={playersCanSolve[selectedPlayerIndex]?.id}
-                />
-              </li>
-            ))}
-          </ul>
-
-          <ul className="mt-2 mb-8 flex items-center justify-center space-x-4">
-            {playersCanSolve.map((player, index) => (
-              <li
-                key={player.id}
-                onClick={scrollHandCardToView.bind(null, index)}
-              >
-                <Avatar className="shadow-md" nickname={player.user.name} />
-              </li>
-            ))}
-          </ul>
-
-          <div className="w-full h-24"></div>
-
+          {/* 底部命令栏 */}
           <div
             className={classnames(
-              "sticky bottom-0 bg-gray-100 z-10 border-t border-t-black",
+              "fixed bottom-0 right-0 left-0 bg-gray-100 z-10 border-t border-t-black h-16 px-4 py-2",
               {
-                "bg-transparent": phases === Phases.AdditionalTestimonials
+                "bg-transparent": phases === Phases.AdditionalTestimonials,
               }
             )}
           >
-            <div className="flex items-center  py-2 space-x-2 h-16">
+            <div
+              data-intro-id="matches-footer"
+              className="flex items-center space-x-2 "
+            >
               <MatchesFooter
                 self={self}
                 curSpeakerId={playersCanSolve[currentPlayerIndex].id}
               />
             </div>
           </div>
-        </div>
+        </>
       </MatchesDispatchContext.Provider>
     </MatchesStateContext.Provider>
   );
@@ -275,5 +480,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     },
   };
 };
+
+Matches.getLayout = getLayout;
 
 export default Matches;

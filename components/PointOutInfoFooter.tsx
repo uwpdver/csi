@@ -21,7 +21,7 @@ const PointOutInfoFooter = () => {
 
   const handleConfirmPointOutInformation = () => {
     if (optionsSetted.length !== 6 || optionsSetted.some(isEmptyOption)) {
-      alert('还有未放置到信息卡上的选项物')
+      alert("还有未放置到信息卡上的选项物");
       return;
     }
     socket.emit(ACTION_GAME_PROVIDE_TESTIMONIALS, {
@@ -43,6 +43,7 @@ const PointOutInfoFooter = () => {
     <Option
       key={option.weight}
       weight={option.weight}
+      className="shrink-0"
       onClick={hanleClickOptionNotSet.bind(null, index)}
       isSelected={curOptionIndex === index}
     />
@@ -50,11 +51,15 @@ const PointOutInfoFooter = () => {
 
   return (
     <>
-      <ul className="flex flex-1 space-x-2">
+      <ul
+        data-intro-id="pointout-info-footer"
+        className="flex flex-1 space-x-2 overflow-auto"
+      >
         {optionsNotSet.map(optionItemRender)}
       </ul>
       <button
-        className="ml-auto mr-0 rounded-full rounded-r-none"
+        data-intro-id="comfirm-pointout-btn"
+        className="ml-auto mr-0 rounded-full rounded-r-none shrink-0"
         onClick={handleConfirmPointOutInformation}
       >
         确定

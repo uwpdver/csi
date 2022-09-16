@@ -30,7 +30,7 @@ const ReplenishInfoFooter = () => {
 
   if (!userInfo) return null;
   const { userId } = userInfo;
-  
+
   // 确认
   const handleConfirm = () => {
     if (optionsSetted.length !== 6 || optionsSetted.some(isEmptyOption)) {
@@ -79,13 +79,22 @@ const ReplenishInfoFooter = () => {
 
   return (
     <>
-      <ul className="flex flex-1 space-x-2 mx-2 mr-auto">
+      <ul
+        data-intro-id="replenish-info-footer__options"
+        className="flex flex-1 space-x-2 mx-2 mr-auto"
+      >
         {optionsNotSet.map(optionItemRender)}
       </ul>
-      {pendingCards.length === 0 && <button onClick={handleReset}>撤销</button>}
-      <button onClick={handleQuit}>放弃</button>
+      {pendingCards.length === 0 && (
+        <button data-intro-id="replenish-info-footer__reset-btn" onClick={handleReset}>
+          撤销
+        </button>
+      )}
+      <button data-intro-id="replenish-info-footer__quit" onClick={handleQuit}>
+        放弃
+      </button>
       {pendingCards.length === 0 && optionsNotSet.length === 0 && (
-        <button onClick={handleConfirm}>确定</button>
+        <button data-intro-id="replenish-info-footer__ok" onClick={handleConfirm}>确定</button>
       )}
     </>
   );

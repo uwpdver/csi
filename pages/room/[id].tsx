@@ -142,7 +142,7 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
       <Head>
         <title>{`犯罪现场 房间：${roomId}`}</title>
       </Head>
-      <Header title={`房间号：${roomId}`}>
+      <Header className="px-4" title={`房间号：${roomId}`}>
         {matchesId ? null : (
           <Link href="/">
             <button className="link" onClick={leaveRoom} type="button">
@@ -151,10 +151,12 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
           </Link>
         )}
       </Header>
-      <div className="mt-4 flex items-center">
+      {/* 房间信息栏 */}
+      <div className="mt-4 mx-4 flex items-center">
         <div className="flex-1"> {data.title}</div>
       </div>
-      <div className="flex-1 mt-4 border border-black shadow-sm rounded-md bg-white">
+      {/* 主体内容区域 */}
+      <div className="flex-1 mt-4 border border-black shadow-sm rounded-md bg-white mx-4">
         <ul className=" grid grid-cols-4 gap-4 p-4">
           {users.map((user) => (
             <li key={user.userId}>
@@ -171,7 +173,9 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
           ))}
         </ul>
       </div>
-      <div className="mt-4">
+
+      {/* 底部命令栏 */}
+      <div className="mt-4 mx-4">
         {matchesId ? (
           <Link href={`/matches/${roomId}/${matchesId}`}>
             <button className="w-full">继续进行中的对局</button>

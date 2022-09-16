@@ -2,6 +2,7 @@ import React from "react";
 import classnames from "classnames";
 import { InfoCardInClient, OptionInClient } from "@/types/client";
 import { InformationCardStatus } from "../types";
+import { isEmptyOption } from "@/utils/option";
 
 interface Props {
   card: InfoCardInClient;
@@ -29,11 +30,14 @@ const InformationCard = ({
   return (
     <div
       className={classnames(
-        "info-card-container relative font-serif transition-transform duration-500",
-        className,
+        "info-card-container relative font-serif duration-500 transition",
         {
-          "transition grayscale-[.8]": status === InformationCardStatus.Discard,
-        }
+          "translate-y-2":
+            !isHidden &&
+            status === InformationCardStatus.Show &&
+            isEmptyOption(option),
+        },
+        className
       )}
       style={{
         transform: isHidden ? "rotateY(180deg)" : "",

@@ -1,8 +1,12 @@
 import Image from "next/image";
 
-const HeroImg = () => {
+interface Props {
+  className?: string;
+}
+
+const HeroImg = ({ className = "" }: Props) => {
   return (
-    <div className="relative w-full aspect-square mt-8">
+    <div className={`relative aspect-square mt-8 shrink-0 ${className}`}>
       <Image
         src="/images/hero.png"
         className=""

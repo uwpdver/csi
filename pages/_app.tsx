@@ -6,6 +6,7 @@ import { io, Socket } from "socket.io-client";
 import { ServerToClientEvents, ClientToServerEvents } from "@/types/socket";
 import { LOCAL_STORAGE_KEYS } from "@/constants/index";
 import "../styles/globals.css";
+import 'intro.js/introjs.css';
 
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {

@@ -1,1 +1,2 @@
 export const USER_INFO = 'USER_INFO'; 
+export const INTRO_COMPLETED_KEYS = 'INTRO_COMPLETED_KEYS';

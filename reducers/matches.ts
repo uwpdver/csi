@@ -7,11 +7,13 @@ import { InformationCardsOnMatches } from "@prisma/client";
 import { InformationCardStatus } from "../types";
 import { Phases } from "@/types/index";
 import { Action } from "./index";
+import { Step } from "intro.js-react";
 import {
   createEmptyOptions,
   createOption,
   isEmptyOption,
 } from "@/utils/option";
+import { INTRO_COMPLETED_KEYS } from "@/constants/localStorageKeys";
 
 export type ActionType =
   | "RESET_HAND_CARD_SELECT"
@@ -29,7 +31,10 @@ export type ActionType =
   // 首次指示信息
   | "POINT_OUT_INFO_PUT_OPTION_ON_CARD"
   | "POINT_OUT_INFO_SELECT_OPTION"
-  | "POINT_OUT_INFO_SYNC";
+  | "POINT_OUT_INFO_SYNC"
+  // 引导
+  | "INTRO_SHOW"
+  | "INTRO_HIDE";
 
 type SelectFor = "murder" | "solveCase";
 
@@ -49,6 +54,14 @@ export interface ReplenishPaneState {
   changedInfoCards: Omit<InformationCardsOnMatches, "matcheId">[];
 }
 
+export type Intro = {
+  show: boolean;
+  steps: Step[];
+  completedKeys: {
+    [key: string]: boolean;
+  };
+};
+
 export type InitState = {
   matches: MatchesInClient;
   handCardSelect: {
@@ -60,6 +73,7 @@ export type InitState = {
   };
   replenishPane: ReplenishPaneState;
   pointOutInfo: PointOutInfoState;
+  intro: Intro;
 };
 
 export const getInitReplenishPaneState = ({
@@ -88,6 +102,29 @@ export const getInitPointOutInfoState = ({
   curOptionIndex: -1,
 });
 
+export const getIntroCompletedKeysForStorage = () => {
+  let result = {};
+  if (typeof window === "undefined") return result;
+  try {
+    const data = localStorage.getItem(INTRO_COMPLETED_KEYS);
+    if (data) {
+      result = JSON.parse(data);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+  return result;
+};
+
+export const savaIntroCompletedKeysToStorage = (data: object) => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(INTRO_COMPLETED_KEYS, JSON.stringify(data));
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 export const initState = {
   matches: {
     players: [],
@@ -107,6 +144,11 @@ export const initState = {
     selectedPlayerIndex: -1,
     selectedMeasure: "",
     selectedClue: "",
+  },
+  intro: {
+    show: false,
+    steps: [],
+    completedKeys: getIntroCompletedKeysForStorage(),
   },
 };
 
@@ -314,14 +356,15 @@ export const reducer = (state: InitState, action: Action<ActionType>) => {
       };
     case "SELECT_NEW_INFO_CARD":
       const {
-        replenishPane: { curOptionIndex },
+        replenishPane: { selectedNewCardIndex },
       } = state;
       const { orginIndex } = action;
       return {
         ...state,
         replenishPane: {
           ...state.replenishPane,
-          selectedNewCardIndex: orginIndex === curOptionIndex ? -1 : orginIndex,
+          selectedNewCardIndex:
+            orginIndex === selectedNewCardIndex ? -1 : orginIndex,
         },
       };
     case "SYNC_REPLENISH_INFO":
@@ -356,6 +399,31 @@ export const reducer = (state: InitState, action: Action<ActionType>) => {
           ),
           curOptionIndex: -1,
           optionsNotSet: [],
+        },
+      };
+    case "INTRO_SHOW":
+      if (action.key in state.intro.completedKeys) {
+        return { ...state };
+      }
+      return {
+        ...state,
+        intro: {
+          ...state.intro,
+          show: true,
+          completedKeys: {
+            ...state.intro.completedKeys,
+            [action.key]: true,
+          },
+          steps: action.steps,
+        },
+      };
+    case "INTRO_HIDE":
+      return {
+        ...state,
+        intro: {
+          ...state.intro,
+          show: false,
+          steps: [],
         },
       };
     default:

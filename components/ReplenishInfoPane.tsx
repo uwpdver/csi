@@ -1,17 +1,10 @@
-import React, { useReducer, useMemo, useCallback, useEffect } from "react";
-import {
-  InfoCardInClient,
-  OptionInClient,
-  PlayerInClient,
-} from "@/types/client";
+import React, { useMemo, useCallback } from "react";
+import { InfoCardInClient, PlayerInClient } from "@/types/client";
+import classnames from "classnames";
 import { InformationCardStatus, Role } from "@/types/index";
-import reducers from "@/reducers/index";
 import { default as InformationCardComponent } from "./InformationCard";
-import { ACTION_GAME_ADDITIONAL_TESTIMONIALS } from "@/constants/index";
 import { useDispatch, useSelector } from "pages/matches/[...id]";
-import { socket } from "pages/_app";
-import Option from "./Option";
-import { createOption, isEmptyOption } from "@/utils/option";
+import { isEmptyOption } from "@/utils/option";
 
 export interface Props {
   userId: number;
@@ -20,17 +13,12 @@ export interface Props {
   self?: PlayerInClient;
 }
 
-const ReplenishInfoPane = ({ userId, roomId, matchesId, self }: Props) => {
-  const {
-    optionsSetted,
-    optionsNotSet,
-    curOptionIndex,
-    informationCards,
-    changedOptions,
-    changedInfoCards,
-  } = useSelector((state) => ({
-    ...state.replenishPane,
-  }));
+const ReplenishInfoPane = ({ self }: Props) => {
+  const { optionsSetted, informationCards, selectedNewCardIndex } = useSelector(
+    (state) => ({
+      ...state.replenishPane,
+    })
+  );
   const dispatch = useDispatch();
 
   const [showingCards, newCards, discardedCards] = useMemo(() => {
@@ -81,24 +69,36 @@ const ReplenishInfoPane = ({ userId, roomId, matchesId, self }: Props) => {
           <InformationCardComponent
             card={card}
             option={option}
+            className={classnames({
+              "shadow-2xl -translate-y-2":
+                card.status === InformationCardStatus.Pending &&
+                selectedNewCardIndex === card.order - 1,
+              "translate-y-2":
+                (card.status === InformationCardStatus.Show &&
+                  selectedNewCardIndex !== -1) ||
+                (card.status === InformationCardStatus.Show &&
+                  isEmptyOption(option)),
+              "grayscale-[.8]": card.status === InformationCardStatus.Discard,
+            })}
             onClickItem={handleClickItem}
             onClick={handleCardClick}
           />
         </li>
       );
     },
-    [optionsSettedShowed, isWitness]
+    [optionsSettedShowed, isWitness, selectedNewCardIndex]
   );
 
   const notShowingCardPaneRender = (
     name: string,
-    cards: InfoCardInClient[]
+    cards: InfoCardInClient[],
+    id = ""
   ) => {
     if (!cards.length) return null;
     return (
       <div>
         <div className="mt-4 mb-2">{name}</div>
-        <ul className="flex flex-nowrap space-x-2 text-center relative">
+        <ul data-intro-id={id} className="flex flex-nowrap space-x-2 text-center relative">
           {cards.map(cardItemRender)}
         </ul>
       </div>
@@ -110,12 +110,19 @@ const ReplenishInfoPane = ({ userId, roomId, matchesId, self }: Props) => {
       <div className="flex-1">
         {/* 场上的场景卡 */}
         <div className="mb-2">场上的场景卡</div>
-        <ul className="flex flex-nowrap overflow-x-scroll text-center relative space-x-2 pb-2">
+        <ul
+          data-intro-id="replaceable-info-cards-container"
+          className="flex flex-nowrap overflow-x-scroll text-center relative space-x-2 pb-2"
+        >
           {showingCards.map(cardItemRender)}
         </ul>
         {/* 其他卡片 */}
         <div className="flex space-x-2">
-          {notShowingCardPaneRender("新增的场景卡", newCards)}
+          {notShowingCardPaneRender(
+            "新增的场景卡",
+            newCards,
+            "new-info-cards-container"
+          )}
           {notShowingCardPaneRender("废弃的场景卡", discardedCards)}
         </div>
       </div>

@@ -6,6 +6,7 @@ import axios from "@/lib/axios";
 import Header from "@/components/Header";
 import HeroImg from "@/components/HeroImg";
 import { getLayout } from "@/components/Layout";
+import SiteFooter from "@/components/SiteFooter";
 
 import { LOCAL_STORAGE_KEYS } from "@/constants/index";
 
@@ -73,9 +74,9 @@ const Login: NextPageWithLayout<{}> = () => {
 
   return (
     <>
-      <Header title="犯罪现场" />
-      <HeroImg />
-      <div className="mt-auto mb-8">
+      <Header className="mx-4" title="犯罪现场" />
+      <HeroImg className="mx-4" />
+      <div className="mt-auto mx-4">
         {isSignUp ? (
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="flex items-center">
@@ -113,6 +114,7 @@ const Login: NextPageWithLayout<{}> = () => {
           </form>
         )}
       </div>
+      <SiteFooter className="mx-4 mt-8" />
     </>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "pages/matches/[...id]";
 
 import { default as InformationCardComponent } from "./InformationCard";
@@ -50,7 +50,10 @@ const InfoCardPane = ({ self }: Props) => {
   };
 
   return (
-    <ul className="flex flex-nowrap overflow-x-scroll text-center relative space-x-2 pb-2">
+    <ul
+      data-intro-id="info-cards-container"
+      className="flex flex-nowrap overflow-x-scroll text-center relative space-x-2 pb-2"
+    >
       {showingInformationCards.map(cardItemRender)}
     </ul>
   );
