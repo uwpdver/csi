@@ -34,7 +34,10 @@ export type ActionType =
   | "POINT_OUT_INFO_SYNC"
   // 引导
   | "INTRO_SHOW"
-  | "INTRO_HIDE";
+  | "INTRO_HIDE"
+  // 开局弹窗
+  | "OPEN_WELCOME_MODAL"
+  | "CLOSE_WELCOME_MODAL";
 
 type SelectFor = "murder" | "solveCase";
 
@@ -63,6 +66,7 @@ export type Intro = {
 };
 
 export type InitState = {
+  isWelcomeModalOpen: boolean;
   matches: MatchesInClient;
   handCardSelect: {
     canSelect: boolean;
@@ -126,6 +130,7 @@ export const savaIntroCompletedKeysToStorage = (data: object) => {
 };
 
 export const initState = {
+  isWelcomeModalOpen: false,
   matches: {
     players: [],
     informationCards: [],
@@ -425,6 +430,16 @@ export const reducer = (state: InitState, action: Action<ActionType>) => {
           show: false,
           steps: [],
         },
+      };
+    case "OPEN_WELCOME_MODAL":
+      return {
+        ...state,
+        isWelcomeModalOpen: true,
+      };
+    case "CLOSE_WELCOME_MODAL":
+      return {
+        ...state,
+        isWelcomeModalOpen: false,
       };
     default:
       return state;

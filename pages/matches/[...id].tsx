@@ -43,6 +43,7 @@ import { useConnectToRoom } from "@/utils/useConnectToRoom";
 import { useCountDown } from "@/utils/useCountDown";
 import { useListRef } from "@/utils/useListRef";
 import MatchesIntro from "@/components/MatchesIntro";
+import MatchesWelcomeModal from "@/components/MatchesWelcomeModal";
 
 interface Props {
   matches: MatchesInClient;
@@ -71,6 +72,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
     reducer.matches.getInitState(matches)
   );
   const {
+    isWelcomeModalOpen,
     replenishPane: { optionsNotSet },
     handCardSelect: { selectedPlayerIndex, selectFor, canSelect },
     matches: { players, phases, rounds, currentPlayerIndex, measure, clue },
@@ -123,6 +125,12 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   }, []);
 
   useEffect(() => {
+    if (phases === Phases.Init) {
+      dispatch({ type: "OPEN_WELCOME_MODAL" });
+    }
+  }, [phases]);
+
+  useEffect(() => {
     if (phases === Phases.Murder && self?.role === Role.Murderer) {
       dispatch({ type: "START_SELECT_HAND_CARD", selectFor: "murder" });
     }
@@ -140,12 +148,6 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
     }
   }, [phases, rounds]);
 
-  useEffect(() => {
-    if (self?.id && roomId && self.status === PlayerStatus.NotReady) {
-      socket.emit(ACTION_GAME_READY, self.id, roomId, matchesId);
-    }
-  }, [self?.id, self?.status, roomId, matchesId]);
-
   // 更新游戏状态
   useEffect(() => {
     const updateMatchesState: ServerGameStateUpdate = (data) =>
@@ -157,7 +159,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   }, []);
 
   useEffect(() => {
-    if(Object.keys(completedKeys).length!== 0){
+    if (Object.keys(completedKeys).length !== 0) {
       savaIntroCompletedKeysToStorage(completedKeys);
     }
   }, [completedKeys]);
@@ -193,11 +195,12 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
         steps: [
           {
             element: '[data-intro-id="matches-footer"]',
-            intro: "点击红色指示物",
+            intro:
+              "点击红色指示物，指示物上的数字代表对应信息的重要程度，将其放在信息卡的词条上来指示出一条指向凶手的【作案手法】或【线索】相关的信息",
           },
           {
             element: '[data-intro-id="info-cards-container"]',
-            intro: "点击与之对应的信息词条",
+            intro: "点击与之对应的信息词条，将指示物放置",
           },
           {
             element: '[data-intro-id="info-cards-container"]',
@@ -243,35 +246,20 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
         steps: [
           {
             element: '[data-intro-id="matches-footer"]',
-            intro: (
-              <p>
-                现在是你的回合，你在自己的回合阐述你的推理和猜测来帮助所有侦探找出真相。
-              </p>
-            ),
+            intro: <p>现在是你的回合，你在自己的回合阐述你的推理和猜测来帮助所有侦探找出真相。</p>,
           },
           {
             element: '[data-intro-id="solve-case-btn"]',
             intro: (
               <>
-                <p>
-                  点击<b>【破案】</b>来使用你
-                  <b>全场唯一</b>
-                  的一次<b>【破案】</b>
-                  机会。
-                </p>
-                <p>
-                  如果指认结果正确，侦探将获得本场游戏的<b>胜利。</b>
-                </p>
+                <p>点击<b>【破案】</b>来使用你<b>全场唯一</b>的一次<b>【破案】</b>机会。</p>
+                <p>如果指认结果正确，侦探将获得本场游戏的<b>胜利。</b></p>
               </>
             ),
           },
           {
             element: '[data-intro-id="end-my-turn-btn"]',
-            intro: (
-              <p>
-                点击<b>【结束回合】</b>可以结束自己的回合，由下一位玩家行动。
-              </p>
-            ),
+            intro: <p>点击<b>【结束回合】</b>可以结束自己的回合，由下一位玩家行动。</p>,
           },
         ],
       });
@@ -287,11 +275,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
           // 选中的新场景卡应该由选中的样式
           {
             element: '[data-intro-id="hand-cards-container"]',
-            intro: (
-              <p>
-                指出你怀疑的 <b>【手段卡】</b>和<b>【线索卡】</b>
-              </p>
-            ),
+            intro: <p>指出你怀疑的 <b>【手段卡】</b>和<b>【线索卡】</b></p>,
           },
         ],
       });
@@ -334,14 +318,9 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
         type: "INTRO_SHOW",
         key: "intro_additional_testimonials_reset_option",
         steps: [
-          // 选中的新场景卡应该由选中的样式
           {
             element: '[data-intro-id="replenish-info-footer__options"]',
-            intro: (
-              <p>
-                被替换的信息卡上的选项物会被重置，你可以点击指示物，然后将其重新放置在刚换上的信息卡的词条上。
-              </p>
-            ),
+            intro: <p>被替换的信息卡上的选项物会被重置，你可以点击指示物，然后将其重新放置在刚换上的信息卡的词条上。</p>,
           },
           {
             element: '[data-intro-id="replenish-info-footer__reset-btn"]',
@@ -351,6 +330,13 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
       });
     }
   }, [self, phases, optionsNotSet]);
+
+  const handleKnowItBtnClick = () => {
+    if (self?.id && roomId && self.status === PlayerStatus.NotReady) {
+      socket.emit(ACTION_GAME_READY, self.id, roomId, matchesId);
+    }
+    dispatch({ type: "CLOSE_WELCOME_MODAL" });
+  };
 
   if (!userInfo) {
     return null;
@@ -379,6 +365,11 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
               self={self}
             />
           </ReactModal>
+          <MatchesWelcomeModal
+            isOpen={isWelcomeModalOpen}
+            self={self}
+            onOKBtnClick={handleKnowItBtnClick}
+          />
 
           {/* 顶部标题栏 */}
           <header className="text-center mt-2 mx-4 mb-2 truncate overflow-hidden">

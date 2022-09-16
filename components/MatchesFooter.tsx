@@ -14,7 +14,7 @@ import Avatar from "./Avatar";
 import ReplenishInfoFooter from "./ReplenishInfoFooter";
 import PointOutInfoFooter from "./PointOutInfoFooter";
 
-const ROLE_TO_TEXT_MAP = {
+export const ROLE_TO_TEXT_MAP = {
   [Role.Witness]: "目击者",
   [Role.Detective]: "侦探",
   [Role.Murderer]: "凶手",

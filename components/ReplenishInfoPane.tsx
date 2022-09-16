@@ -98,7 +98,10 @@ const ReplenishInfoPane = ({ self }: Props) => {
     return (
       <div>
         <div className="mt-4 mb-2">{name}</div>
-        <ul data-intro-id={id} className="flex flex-nowrap space-x-2 text-center relative">
+        <ul
+          data-intro-id={id}
+          className="flex flex-nowrap space-x-2 text-center relative"
+        >
           {cards.map(cardItemRender)}
         </ul>
       </div>
@@ -107,9 +110,12 @@ const ReplenishInfoPane = ({ self }: Props) => {
 
   return (
     <div className="flex flex-col h-full">
+      <header></header>
+      <header className="text-center mx-4 mb-2 truncate overflow-hidden">
+        目击证人正在补充证词
+      </header>
       <div className="flex-1">
         {/* 场上的场景卡 */}
-        <div className="mb-2">场上的场景卡</div>
         <ul
           data-intro-id="replaceable-info-cards-container"
           className="flex flex-nowrap overflow-x-scroll text-center relative space-x-2 pb-2"
