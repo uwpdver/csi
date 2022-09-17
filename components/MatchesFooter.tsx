@@ -7,9 +7,11 @@ import {
   ACTION_GAME_SOLVE_CASE,
 } from "../constants";
 import { useDispatch, useSelector } from "./../pages/matches/[...id]";
-import { socket, UserInfoContext } from "pages/_app";
+import { UserInfoContext } from "pages/_app";
 import { Phases, Role } from "@/types/index";
 import { PlayerInClient } from "@/types/client";
+import { useSocket } from "@/lib/socket";
+
 import Avatar from "./Avatar";
 import ReplenishInfoFooter from "./ReplenishInfoFooter";
 import PointOutInfoFooter from "./PointOutInfoFooter";
@@ -28,7 +30,7 @@ interface Props {
 
 const MatchesFooter = ({ self, curSpeakerId }: Props) => {
   const { userInfo } = useContext(UserInfoContext);
-  const router = useRouter();
+  const { socket } = useSocket();
   const {
     matchesId,
     roomId,
@@ -81,9 +83,9 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
       clue: selectedClue,
     };
     if (selectFor === "murder") {
-      socket.emit(ACTION_GAME_MURDER, payload);
+      socket?.emit(ACTION_GAME_MURDER, payload);
     } else if (self) {
-      socket.emit(ACTION_GAME_SOLVE_CASE, {
+      socket?.emit(ACTION_GAME_SOLVE_CASE, {
         ...payload,
         playerId: self?.id,
       });
@@ -103,20 +105,12 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
 
   // 点击结束本回合按钮
   const handleEndTheTurn = () => {
-    socket.emit(ACTION_GAME_NEXT_SPEAKER, {
+    socket?.emit(ACTION_GAME_NEXT_SPEAKER, {
       userId: userInfo.userId,
       roomId,
       matchesId: matchesId,
       currentPlayerIndex,
     });
-  };
-
-  // 点击退出对局按钮
-  const handleQuitMatchesBtnClick = () => {
-    if (self) {
-      socket.emit(ACTION_GAME_QUIT, self.id, roomId, matchesId);
-    }
-    router.replace(`/room/${roomId}`);
   };
 
   if (self?.role === Role.Witness && phases === Phases.ProvideTestimonials) {
@@ -126,7 +120,7 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
   if (phases === Phases.AdditionalTestimonials && self?.role === Role.Witness) {
     return <ReplenishInfoFooter />;
   }
-  
+
   if (canSelect) {
     return (
       <>

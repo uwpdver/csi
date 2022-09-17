@@ -13,6 +13,7 @@ const HeroImg = ({ className = "" }: Props) => {
         layout="fill"
         alt=""
         objectFit="contain"
+        priority={false}
       />
     </div>
   );

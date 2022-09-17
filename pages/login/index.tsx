@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
-
+import { parseCookies } from "nookies";
 import axios from "@/lib/axios";
 
 import Header from "@/components/Header";
@@ -10,7 +10,17 @@ import SiteFooter from "@/components/SiteFooter";
 
 import { LOCAL_STORAGE_KEYS } from "@/constants/index";
 
-import { NextPageWithLayout, UserInfoContext } from "pages/_app";
+import { NextPageWithLayout, UserInfo, UserInfoContext } from "pages/_app";
+
+const saveUserInfoToStorage = (data: UserInfo) => {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEYS.USER_INFO, JSON.stringify(data));
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
 
 const Login: NextPageWithLayout<{}> = () => {
   const [nickname, setNickname] = useState("");
@@ -20,20 +30,18 @@ const Login: NextPageWithLayout<{}> = () => {
   const router = useRouter();
 
   useEffect(() => {
-    if (userInfo) {
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem(
-            LOCAL_STORAGE_KEYS.USER_INFO,
-            JSON.stringify(userInfo)
-          );
-        } catch (error) {
-          console.error(error);
-        }
-      }
-      router.push("/");
+    const cookies = parseCookies();
+    if (cookies.userId) {
+      router.replace("/");
     }
-  }, [userInfo, router]);
+  }, [router]);
+
+  useEffect(() => {}, [userInfo]);
+
+  const saveUserInfo = (id:number, name:string) => {
+    setUserInfo({ userId: id, nickname: name });
+    saveUserInfoToStorage({ userId: id, nickname: name })
+  }
 
   const handleChangeNickname: React.ChangeEventHandler<HTMLInputElement> = (
     e
@@ -54,7 +62,8 @@ const Login: NextPageWithLayout<{}> = () => {
         name: nickname,
         email: email,
       });
-      setUserInfo({ userId: id, nickname: name });
+      saveUserInfo(id, name);
+      router.replace("/");
     } catch (error) {
       console.log(error);
       setIsSignUp(true);
@@ -69,7 +78,8 @@ const Login: NextPageWithLayout<{}> = () => {
       name: nickname,
       email: email,
     });
-    setUserInfo({ userId: id, nickname: name });
+    saveUserInfo(id, name);
+    router.replace("/");
   };
 
   return (

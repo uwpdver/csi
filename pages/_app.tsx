@@ -1,13 +1,11 @@
 import React, { useState, useEffect, ReactElement, ReactNode } from "react";
 import type { NextPage } from "next";
 import type { AppProps } from "next/app";
-import Modal from 'react-modal'
-import { io, Socket } from "socket.io-client";
-import { ServerToClientEvents, ClientToServerEvents } from "@/types/socket";
+import Modal from "react-modal";
 import { LOCAL_STORAGE_KEYS } from "@/constants/index";
+import { SocketProvider } from "@/lib/socket";
 import "../styles/globals.css";
-import 'intro.js/introjs.css';
-
+import "intro.js/introjs.css";
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -17,29 +15,9 @@ type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout;
 };
 
-Modal.setAppElement('#__next');
+Modal.setAppElement("#__next");
 
-export let socket: Socket<ServerToClientEvents, ClientToServerEvents>;
-
-(async () => {
-  if (typeof window === "undefined") {
-    return;
-  }
-  try {
-    await fetch("/api/socket");
-    socket = io();
-    socket.on("connect", () => {
-      console.log("connect");
-    });
-    socket.on("disconnect", () => {
-      console.log("断开连接了");
-    });
-  } catch (error) {
-    console.log(error);
-  }
-})();
-
-type UserInfo = {
+export type UserInfo = {
   userId: number;
   nickname: string;
 } | null;
@@ -75,7 +53,9 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
 
   return getLayout(
     <UserInfoContext.Provider value={{ userInfo, setUserInfo }}>
-      <Component {...pageProps} />
+      <SocketProvider>
+        <Component {...pageProps} />
+      </SocketProvider>
     </UserInfoContext.Provider>
   );
 }

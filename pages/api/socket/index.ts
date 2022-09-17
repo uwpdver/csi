@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Server } from "socket.io";
 import shuffle from "lodash.shuffle";
-import { Player } from "@prisma/client";
+import { InformationCardsOnMatches, Player } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
@@ -15,8 +15,7 @@ import {
   ServerToClientEvents,
   InterServerEvents,
   SocketData,
-  ClientGameReplenishInformation,
-} from "@/types/socket";
+} from "@/lib/socket";
 import {
   InformationCardStatus,
   Phases,
@@ -46,6 +45,7 @@ import {
   ACTION_DISCONNECT_ROOM,
   BCST_GAME_DESTROYED,
 } from "@/constants/index";
+import { OptionInClient } from "@/types/client";
 
 type Response = NextApiResponse & {
   socket: NextApiResponse["socket"] & {
@@ -229,12 +229,14 @@ export const createGame = async (roomId: number) => {
   return newMatches;
 };
 
-export const replenishInfo: ClientGameReplenishInformation = async ({
-  userId,
-  roomId,
+export const replenishInfo = async ({
   matchesId,
   informationCards,
   options,
+}: {
+  matchesId: number;
+  informationCards: Omit<InformationCardsOnMatches, "matcheId">[];
+  options: OptionInClient[];
 }) => {
   for (const card of informationCards) {
     await prisma.informationCardsOnMatches.update({
@@ -480,8 +482,6 @@ const SocketHandler = (req: NextApiRequest, res: Response) => {
         ACTION_GAME_ADDITIONAL_TESTIMONIALS,
         async ({ userId, roomId, matchesId, informationCards, options }) => {
           await replenishInfo({
-            userId,
-            roomId,
             matchesId,
             informationCards,
             options,
@@ -638,6 +638,11 @@ const SocketHandler = (req: NextApiRequest, res: Response) => {
 
     io.of("/").adapter.on("leave-room", (room, id) => {
       console.log(`socket ${id} has joined room ${room}`);
+    });
+
+    io.use((socket, next) => {
+      console.log(socket.data);
+      next();
     });
   }
   res.end();

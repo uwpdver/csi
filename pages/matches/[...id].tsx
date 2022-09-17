@@ -11,7 +11,7 @@ import Image from "next/image";
 import ReactModal from "react-modal";
 import classnames from "classnames";
 
-import { NextPageWithLayout, socket, UserInfoContext } from "pages/_app";
+import { NextPageWithLayout, UserInfoContext } from "pages/_app";
 import { getMatchesById } from "pages/api/matches/[id]";
 
 import InfoCardPane from "@/components/InfoCardPane";
@@ -35,10 +35,7 @@ import {
   ACTION_GAME_QUIT,
 } from "@/constants/index";
 
-import {
-  ServerGameAllPlayerReady,
-  ServerGameStateUpdate,
-} from "@/types/socket";
+import { ServerGameAllPlayerReady, ServerGameStateUpdate } from "@/lib/socket";
 import { MatchesInClient } from "@/types/client";
 import { Phases, PlayerStatus, Role } from "@/types/index";
 
@@ -47,6 +44,7 @@ import { useCountDown } from "@/utils/useCountDown";
 import { useListRef } from "@/utils/useListRef";
 import MatchesIntro from "@/components/MatchesIntro";
 import MatchesWelcomeModal from "@/components/MatchesWelcomeModal";
+import { useSocket } from "@/lib/socket";
 
 interface Props {
   matches: MatchesInClient;
@@ -71,6 +69,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   const [countDown, setCountDown] = useCountDown();
   const router = useRouter();
   const [handCardPaneInstances, appendToListRef] = useListRef();
+  const { isConnected, socket } = useSocket();
   const [state, dispatch] = useReducer(
     reducer.matches.reducer,
     reducer.matches.getInitState(matches)
@@ -126,29 +125,76 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   // 开始倒计时
   useEffect(() => {
     const startCountDown: ServerGameAllPlayerReady = (s) => setCountDown(s);
-    socket.on(BCST_GAME_ALL_PLAYER_READY, startCountDown);
+    if (isConnected) {
+      socket?.on(BCST_GAME_ALL_PLAYER_READY, startCountDown);
+    }
     return () => {
-      socket.off(BCST_GAME_ALL_PLAYER_READY, startCountDown);
+      if (isConnected) {
+        socket?.off(BCST_GAME_ALL_PLAYER_READY, startCountDown);
+      }
     };
-  }, []);
+  }, [isConnected]);
 
   useEffect(() => {
-    if (phases === Phases.Init) {
-      dispatch({ type: "OPEN_WELCOME_MODAL" });
+    switch (phases) {
+      case Phases.Init:
+        dispatch({ type: "OPEN_WELCOME_MODAL" });
+        break;
+      case Phases.Murder:
+        if (self?.role === Role.Murderer) {
+          dispatch({ type: "START_SELECT_HAND_CARD", selectFor: "murder" });
+          const index = playersCanSolve.findIndex(
+            (player) => player.role === Role.Murderer
+          );
+          scrollHandCardToView(index);
+          setTimeout(
+            () =>
+              dispatch({
+                type: "INTRO_SHOW",
+                key: "intro_murder",
+                steps: [
+                  {
+                    element: '[data-intro-id="hand-cards-container"]',
+                    intro: "选择一张手法牌（红色）和一张线索牌（白色）",
+                  },
+                ],
+              }),
+            500
+          );
+        }
+        break;
+      case Phases.ProvideTestimonials:
+        if (self?.role === Role.Witness) {
+          dispatch({
+            type: "INTRO_SHOW",
+            key: "intro_pointout",
+            steps: [
+              {
+                element: '[data-intro-id="matches-footer"]',
+                intro:
+                  "点击红色指示物，指示物上的数字代表对应信息的重要程度，将其放在信息卡的词条上来指示出一条指向凶手的【作案手法】或【线索】相关的信息",
+              },
+              {
+                element: '[data-intro-id="info-cards-container"]',
+                intro: "点击与之对应的信息词条，将指示物放置",
+              },
+              {
+                element: '[data-intro-id="info-cards-container"]',
+                intro: "将所有的指示物都放置在信息卡的词条上",
+              },
+            ],
+          });
+        }
+        break;
+      case Phases.AdditionalTestimonials:
+        dispatch({ type: "SYNC_REPLENISH_INFO" });
+        if (self?.role === Role.Witness) {
+        }
+        break;
+      default:
+        break;
     }
-  }, [phases]);
-
-  useEffect(() => {
-    if (phases === Phases.Murder && self?.role === Role.Murderer) {
-      dispatch({ type: "START_SELECT_HAND_CARD", selectFor: "murder" });
-    }
-  }, [phases, self?.role]);
-
-  useEffect(() => {
-    if (phases === Phases.AdditionalTestimonials) {
-      dispatch({ type: "SYNC_REPLENISH_INFO" });
-    }
-  }, [phases]);
+  }, [phases, self?.role, playersCanSolve]);
 
   useEffect(() => {
     if (phases === Phases.Reasoning && rounds === 1) {
@@ -158,66 +204,25 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
 
   // 更新游戏状态
   useEffect(() => {
-    const updateMatchesState: ServerGameStateUpdate = (data) =>
+    const updateMatchesState: ServerGameStateUpdate = (data) => {
       dispatch({ type: "UPDATE_MATCHES_STATE", payload: data });
-    socket.on(BCST_GAME_STATE_UPDATE, updateMatchesState);
-    return () => {
-      socket.off(BCST_GAME_STATE_UPDATE, updateMatchesState);
     };
-  }, []);
+
+    if (isConnected) {
+      socket?.on(BCST_GAME_STATE_UPDATE, updateMatchesState);
+    }
+    return () => {
+      if (isConnected) {
+        socket?.off(BCST_GAME_STATE_UPDATE, updateMatchesState);
+      }
+    };
+  }, [isConnected]);
 
   useEffect(() => {
     if (Object.keys(completedKeys).length !== 0) {
       savaIntroCompletedKeysToStorage(completedKeys);
     }
   }, [completedKeys]);
-
-  useEffect(() => {
-    if (phases === Phases.Murder && self?.role === Role.Murderer) {
-      const index = playersCanSolve.findIndex(
-        (player) => player.role === Role.Murderer
-      );
-      scrollHandCardToView(index);
-      setTimeout(
-        () =>
-          dispatch({
-            type: "INTRO_SHOW",
-            key: "intro_murder",
-            steps: [
-              {
-                element: '[data-intro-id="hand-cards-container"]',
-                intro: "选择一张手法牌（红色）和一张线索牌（白色）",
-              },
-            ],
-          }),
-        500
-      );
-    }
-  }, [phases, playersCanSolve, self?.role]);
-
-  useEffect(() => {
-    if (phases === Phases.ProvideTestimonials && self?.role === Role.Witness) {
-      dispatch({
-        type: "INTRO_SHOW",
-        key: "intro_pointout",
-        steps: [
-          {
-            element: '[data-intro-id="matches-footer"]',
-            intro:
-              "点击红色指示物，指示物上的数字代表对应信息的重要程度，将其放在信息卡的词条上来指示出一条指向凶手的【作案手法】或【线索】相关的信息",
-          },
-          {
-            element: '[data-intro-id="info-cards-container"]',
-            intro: "点击与之对应的信息词条，将指示物放置",
-          },
-          {
-            element: '[data-intro-id="info-cards-container"]',
-            intro: "将所有的指示物都放置在信息卡的词条上",
-          },
-        ],
-      });
-    }
-  }, [phases, self?.role]);
 
   const isAllSetted = state.pointOutInfo.optionsNotSet.length === 0;
 
@@ -362,14 +367,14 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
 
   const handleKnowItBtnClick = () => {
     if (self?.id && roomId && self.status === PlayerStatus.NotReady) {
-      socket.emit(ACTION_GAME_READY, self.id, roomId, matchesId);
+      socket?.emit(ACTION_GAME_READY, self.id, roomId, matchesId);
     }
     dispatch({ type: "CLOSE_WELCOME_MODAL" });
   };
 
   const handleQuitMatchesBtnClick = () => {
     if (self) {
-      socket.emit(ACTION_GAME_QUIT, self.id, roomId, matchesId);
+      socket?.emit(ACTION_GAME_QUIT, self.id, roomId, matchesId);
     }
     router.replace(`/room/${roomId}`);
   };
@@ -414,7 +419,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
               overlay: {
                 backgroundColor: "rgba(0,0,0,0.75)",
                 zIndex: 99,
-                backdropFilter: "blur(4px)"
+                backdropFilter: "blur(4px)",
               },
             }}
           >

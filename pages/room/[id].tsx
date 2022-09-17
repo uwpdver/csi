@@ -15,7 +15,7 @@ import Header from "@/components/Header";
 import { getFirstQueryParmse } from "@/utils/getFirstQueryParmse";
 import { useConnectToRoom } from "@/utils/useConnectToRoom";
 
-import { NextPageWithLayout, socket, UserInfoContext } from "pages/_app";
+import { NextPageWithLayout, UserInfoContext } from "pages/_app";
 
 import {
   ACTION_CREATE_GAME,
@@ -32,7 +32,8 @@ import {
   ServerChangeReadyStateHander,
   ServerStartGameHander,
   ServerUpdateUsersInRoom,
-} from "@/types/socket";
+} from "@/lib/socket";
+import { useSocket } from "@/lib/socket";
 
 interface Props {
   data: Room & {
@@ -43,13 +44,14 @@ interface Props {
   };
 }
 
-const MIN_CAN_START_NUM_OF_USER = 2;
+const MIN_CAN_START_NUM_OF_USER = 4;
 
 const Room: NextPageWithLayout<Props> = ({ data }) => {
   const [users, setUsers] = useState(data.users);
   const [matchesId, setMatchesId] = useState<number | null>(data.matchesId);
   const { userInfo } = useContext(UserInfoContext);
   const router = useRouter();
+  const { socket } = useSocket();
   const { query } = router;
   const roomId = parseInt(getFirstQueryParmse(query.id), 10);
   const { isReady } = users.find(
@@ -64,7 +66,7 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
       roomId &&
       !data.users.find((user) => user.userId === userInfo.userId)
     ) {
-      socket.emit(ACTION_ENTER_ROOM, userInfo.userId, roomId);
+      socket?.emit(ACTION_ENTER_ROOM, userInfo.userId, roomId);
     }
   }, [userInfo, roomId, data.users]);
 
@@ -118,17 +120,17 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
 
   const handleReadyBtnClick = () => {
     if (!userInfo?.userId) return null;
-    socket.emit(ACTION_CHANGE_READY_STATE, userInfo.userId, !isReady);
+    socket?.emit(ACTION_CHANGE_READY_STATE, userInfo.userId, !isReady);
   };
 
   const handleStartBtnClick = async () => {
     if (!userInfo?.userId) return null;
-    socket.emit(ACTION_CREATE_GAME, userInfo.userId, roomId);
+    socket?.emit(ACTION_CREATE_GAME, userInfo.userId, roomId);
   };
 
   const leaveRoom = () => {
     if (userInfo) {
-      socket.emit(ACTION_LEAVE_ROOM, userInfo.userId, roomId);
+      socket?.emit(ACTION_LEAVE_ROOM, userInfo.userId, roomId);
     }
     router.replace("/");
   };

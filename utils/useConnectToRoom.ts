@@ -1,12 +1,17 @@
 import { useEffect } from "react";
 import { ACTION_CONNECT_ROOM, ACTION_DISCONNECT_ROOM } from "../constants";
-import { socket } from "../pages/_app";
+import { useSocket } from "@/lib/socket";
 
 export const useConnectToRoom = (roomId: number) => {
+  const { isConnected,socket } = useSocket();
   useEffect(() => {
-    socket?.emit(ACTION_CONNECT_ROOM, roomId);
-    return ()=>{
-      socket?.emit(ACTION_DISCONNECT_ROOM, roomId);
+    if(isConnected){
+      socket?.emit(ACTION_CONNECT_ROOM, roomId);
     }
-  }, [roomId]);
+    return () => {
+      if(isConnected){
+        socket?.emit(ACTION_DISCONNECT_ROOM, roomId);
+      }
+    };
+  }, [roomId, isConnected]);
 };

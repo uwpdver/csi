@@ -2,8 +2,9 @@ import React, { useContext } from "react";
 import Option from "./Option";
 import { ACTION_GAME_PROVIDE_TESTIMONIALS } from "@/constants/index";
 import { useDispatch, useSelector } from "pages/matches/[...id]";
-import { socket, UserInfoContext } from "pages/_app";
+import { UserInfoContext } from "pages/_app";
 import { isEmptyOption } from "@/utils/option";
+import { useSocket } from "@/lib/socket";
 import { OptionInClient } from "@/types/client";
 
 const PointOutInfoFooter = () => {
@@ -15,6 +16,7 @@ const PointOutInfoFooter = () => {
       ...state.pointOutInfo,
     }));
   const dispatch = useDispatch();
+  const { socket } = useSocket();
 
   if (!userInfo) return null;
   const { userId } = userInfo;
@@ -24,7 +26,7 @@ const PointOutInfoFooter = () => {
       alert("还有未放置到信息卡上的选项物");
       return;
     }
-    socket.emit(ACTION_GAME_PROVIDE_TESTIMONIALS, {
+    socket?.emit(ACTION_GAME_PROVIDE_TESTIMONIALS, {
       userId,
       roomId,
       matchesId,

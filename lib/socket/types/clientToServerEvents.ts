@@ -1,9 +1,10 @@
+import { InformationCardsOnMatches } from "@prisma/client";
+import { OptionInClient } from "@/types/client";
 import {
   ACTION_CHANGE_READY_STATE,
   ACTION_CREATE_GAME,
   ACTION_ENTER_ROOM,
   ACTION_LEAVE_ROOM,
-
   ACTION_GAME_ACCOMPLICE,
   ACTION_GAME_ADDITIONAL_TESTIMONIALS,
   ACTION_GAME_MURDER,
@@ -11,52 +12,12 @@ import {
   ACTION_GAME_PROVIDE_TESTIMONIALS,
   ACTION_GAME_SOLVE_CASE,
   ACTION_GAME_READY,
-  
-  BCST_CHANGE_READY_STATE,
-  BCST_GAME_STATE_UPDATE,
-  BCST_START_GAME,
-  BCST_UPDATE_USERS_IN_ROOM,
-  BCST_GAME_ALL_PLAYER_READY,
   ACTION_GAME_QUIT,
   ACTION_CONNECT_ROOM,
   ACTION_DISCONNECT_ROOM,
-  BCST_GAME_DESTROYED,
-} from "../constants";
-import { InformationCardsOnMatches, User, UserInRoom } from "@prisma/client";
-import { MatchesInClient, OptionInClient } from "@/types/client";
+} from "@/constants/index";
 
-export type ServerUpdateUsersInRoom = ({
-  users,
-}: {
-  users: (UserInRoom & {
-    user: User;
-  })[];
-}) => void;
-
-export type ServerChangeReadyStateHander = (data: {
-  userId: number;
-  isReady: boolean;
-}) => void;
-
-export type ServerStartGameHander = (data: { id: number }) => void;
-
-export type ServerDefaultHander = (data: any) => void;
-
-export type ServerGameStateUpdate = (data: MatchesInClient) => void;
-
-export type ServerGameAllPlayerReady = (s:number) => void;
-
-export type ServerGameDestroyed = () => void;
-
-export interface ServerToClientEvents {
-  [BCST_UPDATE_USERS_IN_ROOM]: ServerUpdateUsersInRoom;
-  [BCST_CHANGE_READY_STATE]: ServerChangeReadyStateHander;
-  [BCST_START_GAME]: ServerStartGameHander;
-  [BCST_GAME_STATE_UPDATE]: ServerGameStateUpdate;
-  [BCST_GAME_ALL_PLAYER_READY]: ServerGameAllPlayerReady;
-  [BCST_GAME_DESTROYED]: ServerGameDestroyed;
-}
-
+// 客户端发送给服务端的事件
 export type ClientChangeReadyStateHander = (
   userID: number,
   isReady: boolean
@@ -109,13 +70,21 @@ export type ClientGameReplenishInformation = (data: {
   userId: number;
   roomId: number;
   matchesId: number;
-  informationCards: Omit<InformationCardsOnMatches, 'matcheId'>[],
-  options: OptionInClient[], 
+  informationCards: Omit<InformationCardsOnMatches, "matcheId">[];
+  options: OptionInClient[];
 }) => void;
 
-export type ClientGameReady = (playerId: number, roomID: number, matchesId:number) => void;
+export type ClientGameReady = (
+  playerId: number,
+  roomID: number,
+  matchesId: number
+) => void;
 
-export type ClientGameQuit = (playerId: number, roomID: number, matchesId:number) => void;
+export type ClientGameQuit = (
+  playerId: number,
+  roomID: number,
+  matchesId: number
+) => void;
 
 export type ClientConnectRoom = (roomID: number) => void;
 
@@ -137,9 +106,3 @@ export interface ClientToServerEvents {
   [ACTION_GAME_NEXT_SPEAKER]: ClientGameNextSpeaker;
   [ACTION_GAME_QUIT]: ClientGameQuit;
 }
-
-export interface InterServerEvents {
-  ping: () => void;
-}
-
-export interface SocketData {}

@@ -46,6 +46,7 @@ export const getMatchesById = async (id: number) => {
       },
     },
   });
+  console.log('getMatchesById')
   return result;
 };
 
