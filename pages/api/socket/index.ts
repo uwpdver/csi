@@ -8,7 +8,7 @@ import {
   SocketData,
 } from "@/lib/socket";
 
-import { socketConnectionHander } from "./controller";
+import { socketController } from "./controller";
 
 type Response = NextApiResponse & {
   socket: NextApiResponse["socket"] & {
@@ -29,7 +29,9 @@ export default function handler(req: NextApiRequest, res: Response) {
     >(res.socket.server);
     res.socket.server.io = io;
 
-    io.on("connection", (socket) => socketConnectionHander(socket, io));
+    io.on("connection", (socket) => {
+      socketController(socket, io);
+    });
   }
   res.end();
 }

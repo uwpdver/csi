@@ -13,7 +13,7 @@ import { isEmptyOption } from "@/utils/option";
 
 import Option from "./Option";
 
-const ReplenishInfoFooter = () => {
+const ReplenishInfoFooter = ({ playerId }: { playerId?: number }) => {
   const { userInfo } = useContext(UserInfoContext);
   const {
     roomId,
@@ -40,12 +40,14 @@ const ReplenishInfoFooter = () => {
 
   // 确认
   const handleConfirm = () => {
+    if (!playerId) return;
     if (optionsSetted.length !== 6 || optionsSetted.some(isEmptyOption)) {
       return;
     }
     socket?.emit(ACTION_GAME_ADDITIONAL_TESTIMONIALS, {
       userId,
       roomId,
+      playerId,
       matchesId,
       options: changedOptions,
       informationCards: changedInfoCards,
@@ -58,9 +60,11 @@ const ReplenishInfoFooter = () => {
 
   // 放弃
   const handleQuit = () => {
+    if (!playerId) return;
     socket?.emit(ACTION_GAME_ADDITIONAL_TESTIMONIALS, {
       userId,
       roomId,
+      playerId,
       matchesId,
       options: [],
       informationCards: pendingCards.map((card) => ({

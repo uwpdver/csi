@@ -46,6 +46,7 @@ export type ClientGameMurderHander = (data: {
 export type ClientGamePointOutInformation = (data: {
   userId: number;
   roomId: number;
+  playerId: number,
   matchesId: number;
   options: OptionInClient[];
 }) => void;
@@ -53,6 +54,7 @@ export type ClientGamePointOutInformation = (data: {
 export type ClientGameNextSpeaker = (data: {
   userId: number;
   roomId: number;
+  playerId: number,
   matchesId: number;
   currentPlayerIndex: number;
 }) => void;
@@ -64,11 +66,13 @@ export type ClientGameSolveCase = (data: {
   matchesId: number;
   measure: string;
   clue: string;
+  currentPlayerIndex: number;
 }) => void;
 
 export type ClientGameReplenishInformation = (data: {
   userId: number;
   roomId: number;
+  playerId: number,
   matchesId: number;
   informationCards: Omit<InformationCardsOnMatches, "matcheId">[];
   options: OptionInClient[];

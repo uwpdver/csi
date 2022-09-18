@@ -7,7 +7,7 @@ import { useSocket } from "@/lib/socket";
 import { ACTION_GAME_PROVIDE_TESTIMONIALS } from "@/lib/socket/constants";
 import { OptionInClient } from "@/types/client";
 
-const PointOutInfoFooter = () => {
+const PointOutInfoFooter = ({ playerId }: { playerId?: number }) => {
   const { userInfo } = useContext(UserInfoContext);
   const { roomId, matchesId, optionsSetted, optionsNotSet, curOptionIndex } =
     useSelector((state) => ({
@@ -22,6 +22,7 @@ const PointOutInfoFooter = () => {
   const { userId } = userInfo;
 
   const handleConfirmPointOutInformation = () => {
+    if (!playerId) return;
     if (optionsSetted.length !== 6 || optionsSetted.some(isEmptyOption)) {
       alert("还有未放置到信息卡上的选项物");
       return;
@@ -29,6 +30,7 @@ const PointOutInfoFooter = () => {
     socket?.emit(ACTION_GAME_PROVIDE_TESTIMONIALS, {
       userId,
       roomId,
+      playerId,
       matchesId,
       options: optionsSetted,
     });

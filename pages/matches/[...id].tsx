@@ -31,12 +31,17 @@ import {
 
 import {
   ACTION_GAME_READY,
+  ACTION_GAME_QUIT,
+  BCST_ERROR,
   BCST_GAME_STATE_UPDATE,
   BCST_GAME_ALL_PLAYER_READY,
-  ACTION_GAME_QUIT,
 } from "@/lib/socket/constants";
 
-import { ServerGameAllPlayerReady, ServerGameStateUpdate } from "@/lib/socket";
+import {
+  ServerErrorHander,
+  ServerGameAllPlayerReady,
+  ServerGameStateUpdate,
+} from "@/lib/socket";
 import { MatchesInClient } from "@/types/client";
 import { Phases, PlayerStatus, Role } from "@/types/index";
 
@@ -125,6 +130,19 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
 
   // 开始倒计时
   useEffect(() => {
+    const alertError: ServerErrorHander = (error) => alert(error.message);
+    if (isConnected) {
+      socket?.on(BCST_ERROR, alertError);
+    }
+    return () => {
+      if (isConnected) {
+        socket?.off(BCST_ERROR, alertError);
+      }
+    };
+  }, [isConnected]);
+
+  // 开始倒计时
+  useEffect(() => {
     const startCountDown: ServerGameAllPlayerReady = (s) => setCountDown(s);
     if (isConnected) {
       socket?.on(BCST_GAME_ALL_PLAYER_READY, startCountDown);
@@ -139,7 +157,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   useEffect(() => {
     switch (phases) {
       case Phases.Init:
-        if(self?.status === PlayerStatus.NotReady){
+        if (self?.status === PlayerStatus.NotReady) {
           dispatch({ type: "OPEN_WELCOME_MODAL" });
         }
         break;
@@ -208,7 +226,6 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   // 更新游戏状态
   useEffect(() => {
     const updateMatchesState: ServerGameStateUpdate = (data) => {
-      console.log('UPDATE_MATCHES_STATE', data)
       if (data) {
         dispatch({ type: "UPDATE_MATCHES_STATE", payload: data });
       }

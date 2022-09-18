@@ -89,6 +89,7 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
       socket?.emit(ACTION_GAME_SOLVE_CASE, {
         ...payload,
         playerId: self?.id,
+        currentPlayerIndex,
       });
     }
     dispatch({ type: "RESET_HAND_CARD_SELECT" });
@@ -106,20 +107,23 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
 
   // 点击结束本回合按钮
   const handleEndTheTurn = () => {
-    socket?.emit(ACTION_GAME_NEXT_SPEAKER, {
-      userId: userInfo.userId,
-      roomId,
-      matchesId: matchesId,
-      currentPlayerIndex,
-    });
+    if (self) {
+      socket?.emit(ACTION_GAME_NEXT_SPEAKER, {
+        userId: userInfo.userId,
+        roomId,
+        playerId: self?.id,
+        matchesId: matchesId,
+        currentPlayerIndex,
+      });
+    }
   };
 
   if (self?.role === Role.Witness && phases === Phases.ProvideTestimonials) {
-    return <PointOutInfoFooter />;
+    return <PointOutInfoFooter playerId={self.id} />;
   }
 
   if (phases === Phases.AdditionalTestimonials && self?.role === Role.Witness) {
-    return <ReplenishInfoFooter />;
+    return <ReplenishInfoFooter playerId={self.id} />;
   }
 
   if (canSelect) {

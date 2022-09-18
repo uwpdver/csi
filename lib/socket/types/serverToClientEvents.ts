@@ -1,6 +1,7 @@
 import { User, UserInRoom } from "@prisma/client";
 import { MatchesInClient } from "@/types/client";
 import {
+  BCST_ERROR,
   BCST_CHANGE_READY_STATE,
   BCST_GAME_STATE_UPDATE,
   BCST_START_GAME,
@@ -23,6 +24,8 @@ export type ServerChangeReadyStateHander = (data: {
   isReady: boolean;
 }) => void;
 
+export type ServerErrorHander = (err: { message: string }) => void;
+
 export type ServerStartGameHander = (data: { id: number }) => void;
 
 export type ServerDefaultHander = (data: any) => void;
@@ -34,6 +37,7 @@ export type ServerGameAllPlayerReady = (s: number) => void;
 export type ServerGameDestroyed = () => void;
 
 export interface ServerToClientEvents {
+  [BCST_ERROR]: ServerErrorHander;
   [BCST_UPDATE_USERS_IN_ROOM]: ServerUpdateUsersInRoom;
   [BCST_CHANGE_READY_STATE]: ServerChangeReadyStateHander;
   [BCST_START_GAME]: ServerStartGameHander;

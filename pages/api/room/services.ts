@@ -25,17 +25,14 @@ export async function enterRoom(userId: number, roomId: number) {
 
 // 用户离开房间
 export async function leaveRoom(userId: number, roomId: number) {
-  try {
-    const room = await removeUserFromRoom(userId, roomId);
-    if (room.users.length === 0) {
-      return deleteRoom(roomId);
-    } else if (room.hostId === userId) {
-      return changeRoomHost(room.users[0].userId, roomId);
-    } else {
-      return room;
-    }
-  } catch (error) {
-    console.error(error);
+  const room = await removeUserFromRoom(userId, roomId);
+  if (room.users.length === 0) {
+    await deleteRoom(roomId);
+    return;
+  } else if (room.hostId === userId) {
+    return await changeRoomHost(room.users[0].userId, roomId);
+  } else {
+    return room;
   }
 }
 
@@ -153,7 +150,7 @@ export async function getUserRoom(userId: number) {
 
 // 修改用户准备状态
 export async function changeUserReadyState(userId: number, isReady: boolean) {
-  const result = await prisma.userInRoom.update({
+  const room = await prisma.userInRoom.update({
     where: {
       userId,
     },
@@ -161,5 +158,5 @@ export async function changeUserReadyState(userId: number, isReady: boolean) {
       isReady,
     },
   });
-  return result;
+  return room;
 }

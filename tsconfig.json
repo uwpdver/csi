@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "experimentalDecorators": true,
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -11,6 +12,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "emitDecoratorMetadata": false,
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
@@ -21,7 +23,7 @@
       "@/utils/*": ["utils/*"],
       "@/types/*": ["types/*"],
       "@/reducers/*": ["reducers/*"],
-      "@/lib/*": ["lib/*"],
+      "@/lib/*": ["lib/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "components/Optiontsx"],
