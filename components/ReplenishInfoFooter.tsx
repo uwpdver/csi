@@ -1,11 +1,15 @@
 import React, { useContext } from "react";
+
 import { useDispatch, useSelector } from "pages/matches/[...id]";
 import { UserInfoContext } from "pages/_app";
-import { useSocket } from "@/lib/socket";
-import { isEmptyOption } from "@/utils/option";
+
 import { InformationCardStatus } from "@/types/index";
 import { OptionInClient } from "@/types/client";
-import { ACTION_GAME_ADDITIONAL_TESTIMONIALS } from "@/constants/index";
+
+import { useSocket } from "@/lib/socket";
+import { ACTION_GAME_ADDITIONAL_TESTIMONIALS } from "@/lib/socket/constants";
+
+import { isEmptyOption } from "@/utils/option";
 
 import Option from "./Option";
 
@@ -25,8 +29,8 @@ const ReplenishInfoFooter = () => {
     roomId: state.matches.roomId,
     matchesId: state.matches.id,
     pendingCards: state.replenishPane.informationCards
-    .slice(6)
-    .filter(({ status }) => status === InformationCardStatus.Pending),
+      .slice(6)
+      .filter(({ status }) => status === InformationCardStatus.Pending),
   }));
   const dispatch = useDispatch();
   const { socket } = useSocket();

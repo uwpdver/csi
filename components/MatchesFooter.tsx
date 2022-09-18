@@ -1,16 +1,17 @@
 import React, { useContext } from "react";
-import { useRouter } from "next/router";
+
+import { useDispatch, useSelector } from "pages/matches/[...id]";
+import { UserInfoContext } from "pages/_app";
+
 import {
   ACTION_GAME_MURDER,
   ACTION_GAME_NEXT_SPEAKER,
-  ACTION_GAME_QUIT,
   ACTION_GAME_SOLVE_CASE,
-} from "../constants";
-import { useDispatch, useSelector } from "./../pages/matches/[...id]";
-import { UserInfoContext } from "pages/_app";
+} from "@/lib/socket/constants";
+import { useSocket } from "@/lib/socket";
+
 import { Phases, Role } from "@/types/index";
 import { PlayerInClient } from "@/types/client";
-import { useSocket } from "@/lib/socket";
 
 import Avatar from "./Avatar";
 import ReplenishInfoFooter from "./ReplenishInfoFooter";

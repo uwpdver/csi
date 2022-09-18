@@ -2,7 +2,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { setCookie } from "nookies";
 import { prisma } from "@/lib/prisma";
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const { method, body } = req;
   if (method === "POST") {
     const { email } = body;
@@ -18,17 +21,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         },
       });
       setCookie({ res }, "userId", String(result.id), {
-        maxAge: 24 * 60 * 60,
-        path: '/'
+        maxAge: 7 * 24 * 60 * 60,
+        path: "/",
       });
       res.status(200).json(result);
     } catch (error) {
       console.error(error);
-      res.status(404).end('');
+      res.status(404).end("");
     }
   } else {
     res.status(404).end();
   }
-};
-
-export default handler;
+}

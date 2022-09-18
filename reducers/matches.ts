@@ -333,9 +333,13 @@ export const reducer = (state: InitState, action: Action<ActionType>) => {
     case "SELECT_HAND_CARD":
       return selectHandCard(state, action as SelectHandCardAction);
     case "UPDATE_MATCHES_STATE":
+      const matchesPartial = action.payload as Partial<MatchesInClient>;
       return {
         ...state,
-        matches: action.payload as MatchesInClient,
+        matches: {
+          ...state.matches,
+          ...matchesPartial,
+        },
       };
     case "RESET_ALL":
       return {

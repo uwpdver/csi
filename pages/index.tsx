@@ -7,14 +7,14 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 
 import axios from "@/lib/axios";
-import { prisma } from "@/lib/prisma";
 
 import Header from "@/components/Header";
 import { getLayout } from "@/components/Layout";
 import HeroImg from "@/components/HeroImg";
+import SiteFooter from "@/components/SiteFooter";
 
 import { NextPageWithLayout, UserInfoContext } from "pages/_app";
-import SiteFooter from "@/components/SiteFooter";
+import * as roomServices from "pages/api/room/services";
 
 interface Props {
   room: Room | null;
@@ -128,17 +128,10 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     };
   }
   const userId = parseInt(cookies.userId, 10);
-  const userInRoom = await prisma.userInRoom.findUnique({
-    where: {
-      userId,
-    },
-    include: {
-      room: true,
-    },
-  });
+  const room = (await roomServices.getUserRoom(userId)) ?? null;
   return {
     props: {
-      room: userInRoom?.room ?? null,
+      room,
     },
   };
 };

@@ -6,8 +6,6 @@ import { useRouter } from "next/router";
 import nookies from "nookies";
 import { User, Room, UserInRoom } from "@prisma/client";
 
-import { prisma } from "@/lib/prisma";
-
 import { getLayout } from "@/components/Layout";
 import Avatar from "@/components/Avatar";
 import Header from "@/components/Header";
@@ -16,6 +14,7 @@ import { getFirstQueryParmse } from "@/utils/getFirstQueryParmse";
 import { useConnectToRoom } from "@/utils/useConnectToRoom";
 
 import { NextPageWithLayout, UserInfoContext } from "pages/_app";
+import * as roomServices from "pages/api/room/services";
 
 import {
   ACTION_CREATE_GAME,
@@ -26,14 +25,13 @@ import {
   BCST_GAME_DESTROYED,
   BCST_START_GAME,
   BCST_UPDATE_USERS_IN_ROOM,
-} from "@/constants/index";
-
+} from "@/lib/socket/constants";
 import {
   ServerChangeReadyStateHander,
   ServerStartGameHander,
   ServerUpdateUsersInRoom,
+  useSocket
 } from "@/lib/socket";
-import { useSocket } from "@/lib/socket";
 
 interface Props {
   data: Room & {
@@ -217,20 +215,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     };
   }
   const roomId = parseInt(getFirstQueryParmse(query.id), 10);
-  const room = await prisma.room.findUnique({
-    where: {
-      id: roomId,
-    },
-    include: {
-      users: {
-        include: {
-          user: true,
-        },
-      },
-      host: true,
-    },
-  });
-
+  const room = await roomServices.getDetailById(roomId);
   if (!room) {
     return {
       redirect: {

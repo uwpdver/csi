@@ -1,23 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { prisma } from "@/lib/prisma";
 import { getFirstQueryParmse } from "@/utils/getFirstQueryParmse";
+import * as roomServices from "./services";
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const { query } = req;
   const roomId = parseInt(getFirstQueryParmse(query.id), 10);
-  const room = await prisma.room.findUnique({
-    where: {
-      id: roomId,
-    },
-    include: {
-      users: {
-        include: {
-          user: true,
-        },
-      },
-    },
-  });
-  res.status(200).json(room);
-};
-
-export default handler;
+  try {
+    const room = await roomServices.getDetailById(roomId);
+    res.status(200).json(room);
+  } catch (error) {
+    throw new Error("错误");
+  }
+}

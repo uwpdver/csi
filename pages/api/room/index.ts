@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { prisma } from "@/lib/prisma";
+import * as roomServices from "./services";
 
 type Response = NextApiResponse & {
   socket: NextApiResponse["socket"] & {
@@ -14,16 +14,10 @@ const roomHandler = async (req: NextApiRequest, res: Response) => {
   } = req;
   if (method === "POST") {
     try {
-      const result = await prisma.room.create({
-        data: {
-          hostId: userId,
-          title: name,
-        },
-      });
-      res.status(200).json(result);
+      const room = await roomServices.createRoom(userId, name);
+      res.status(200).json(room);
     } catch (error) {
-      console.error(error);
-      res.status(400).end("");
+      throw new Error("错误");
     }
   } else {
     res.status(404).end();

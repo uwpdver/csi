@@ -10,9 +10,10 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import ReactModal from "react-modal";
 import classnames from "classnames";
+import nookies from "nookies";
 
 import { NextPageWithLayout, UserInfoContext } from "pages/_app";
-import { getMatchesById } from "pages/api/matches/[id]";
+import * as matchesServices from "pages/api/matches/services";
 
 import InfoCardPane from "@/components/InfoCardPane";
 import HandCardsPanel from "@/components/HandCardsPanel";
@@ -33,7 +34,7 @@ import {
   BCST_GAME_STATE_UPDATE,
   BCST_GAME_ALL_PLAYER_READY,
   ACTION_GAME_QUIT,
-} from "@/constants/index";
+} from "@/lib/socket/constants";
 
 import { ServerGameAllPlayerReady, ServerGameStateUpdate } from "@/lib/socket";
 import { MatchesInClient } from "@/types/client";
@@ -138,7 +139,9 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   useEffect(() => {
     switch (phases) {
       case Phases.Init:
-        dispatch({ type: "OPEN_WELCOME_MODAL" });
+        if(self?.status === PlayerStatus.NotReady){
+          dispatch({ type: "OPEN_WELCOME_MODAL" });
+        }
         break;
       case Phases.Murder:
         if (self?.role === Role.Murderer) {
@@ -194,7 +197,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
       default:
         break;
     }
-  }, [phases, self?.role, playersCanSolve]);
+  }, [phases, self, playersCanSolve]);
 
   useEffect(() => {
     if (phases === Phases.Reasoning && rounds === 1) {
@@ -205,7 +208,10 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   // 更新游戏状态
   useEffect(() => {
     const updateMatchesState: ServerGameStateUpdate = (data) => {
-      dispatch({ type: "UPDATE_MATCHES_STATE", payload: data });
+      console.log('UPDATE_MATCHES_STATE', data)
+      if (data) {
+        dispatch({ type: "UPDATE_MATCHES_STATE", payload: data });
+      }
     };
 
     if (isConnected) {
@@ -552,6 +558,18 @@ export const useDispatch = () => {
 };
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+  const cookies = nookies.get(ctx);
+  if (!cookies.userId) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+      props: {
+        room: null,
+      },
+    };
+  }
   const { query } = ctx;
   if (!Array.isArray(query.id) || query.id.length < 2) {
     return {
@@ -560,7 +578,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   }
   const roomId = parseInt(query.id[0], 10);
   const matchesId = parseInt(query.id[1], 10);
-  const matches = await getMatchesById(matchesId);
+  const matches = await matchesServices.getDetailById(matchesId);
   return {
     props: {
       matches,

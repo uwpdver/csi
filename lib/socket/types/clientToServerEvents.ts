@@ -15,7 +15,7 @@ import {
   ACTION_GAME_QUIT,
   ACTION_CONNECT_ROOM,
   ACTION_DISCONNECT_ROOM,
-} from "@/constants/index";
+} from "../constants";
 
 // 客户端发送给服务端的事件
 export type ClientChangeReadyStateHander = (

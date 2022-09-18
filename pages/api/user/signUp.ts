@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { setCookie } from "nookies";
 import { prisma } from "@/lib/prisma";
 
-const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method, body } = req;
   if (method === "POST") {
     const { name, email } = body;
@@ -32,5 +32,3 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(404).end();
   }
 };
-
-export default handler;

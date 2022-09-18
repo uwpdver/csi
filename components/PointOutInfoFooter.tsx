@@ -1,10 +1,10 @@
 import React, { useContext } from "react";
 import Option from "./Option";
-import { ACTION_GAME_PROVIDE_TESTIMONIALS } from "@/constants/index";
 import { useDispatch, useSelector } from "pages/matches/[...id]";
 import { UserInfoContext } from "pages/_app";
 import { isEmptyOption } from "@/utils/option";
 import { useSocket } from "@/lib/socket";
+import { ACTION_GAME_PROVIDE_TESTIMONIALS } from "@/lib/socket/constants";
 import { OptionInClient } from "@/types/client";
 
 const PointOutInfoFooter = () => {
