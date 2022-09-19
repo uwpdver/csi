@@ -175,7 +175,7 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
       </div>
 
       {/* 底部命令栏 */}
-      <div className="mt-4 mx-4">
+      <div className="mt-4 mx-4 mb-4">
         {matchesId ? (
           <Link href={`/matches/${roomId}/${matchesId}`}>
             <button className="w-full">继续进行中的对局</button>
@@ -191,7 +191,7 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
                 开始
               </button>
             )}
-            <button className="w-full mt-4 mb-4" onClick={handleReadyBtnClick}>
+            <button className="w-full mt-4" onClick={handleReadyBtnClick}>
               {isReady ? "取消准备" : "准备"}
             </button>
           </>
