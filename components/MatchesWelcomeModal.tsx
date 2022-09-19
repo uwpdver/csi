@@ -2,23 +2,25 @@ import React from "react";
 import ReactModal from "react-modal";
 import { PlayerInClient } from "@/types/client";
 import { Role } from "@/types/index";
+import { useSelector } from "pages/matches/[...id]";
 
 const MatchesWelcomeModal = ({
   isOpen = false,
-  self,
   onOKBtnClick = () => {},
 }: {
   isOpen: boolean;
-  self?: PlayerInClient;
   onOKBtnClick?(): void;
 }) => {
+  const selfName = useSelector(state => state.computed.self?.user.name ?? "无名") 
+  const selfRole = useSelector(state => state.computed.self?.role) 
+
   const contentRender = () => {
-    switch (self?.role) {
+    switch (selfRole) {
       case Role.Witness:
         return (
-          <article className="font-serif flex flex-col">
+          <article className="flex flex-col">
             <div className="flex-1 space-y-1">
-              <p className="">{`亲爱的${self?.user.name ?? "无名"}`}</p>
+              <p className="">{`亲爱的${selfName}`}</p>
               <p className="indent-8">你好！</p>
               <p className="indent-8">
                 如你所见，我们这里刚发生了一些可怕的事情，据我们调查得知只有你看见了【凶手】行凶的过程，希望你能把你知道的有关凶手的信息尽可能都告诉我们，协助我们抓出凶手。我们的【侦探】也会倾力配合。
@@ -43,7 +45,7 @@ const MatchesWelcomeModal = ({
         );
       case Role.Murderer:
         return (
-          <article className="font-serif flex flex-col">
+          <article className="flex flex-col">
             <header className="mb-4">
               <span>
                 {new Date().toLocaleDateString(undefined, {
@@ -74,9 +76,9 @@ const MatchesWelcomeModal = ({
 
       default:
         return (
-          <article className="font-serif flex flex-col">
+          <article className="flex flex-col">
             <div className="flex-1 space-y-1">
-              <p className="">{`亲爱的${self?.user.name ?? "无名"}侦探`}</p>
+              <p className="">{`亲爱的${selfName}侦探`}</p>
               <p className="indent-8">你好！</p>
               <p className="indent-8">
                 我们这里发生了一场骇人听闻的凶案，为了找出真凶我们邀请了几位【侦探】来帮助我们，而【凶手】已经悄悄地藏在在场的每一个自称“侦探”的人之中。好在我们发现了一位【目击者】，但他好像有点被吓坏了，没法正常说话。
@@ -109,6 +111,8 @@ const MatchesWelcomeModal = ({
           left: 12,
           right: 12,
           bottom: "auto",
+          backgroundColor: '#202028',
+          border: '0',
         },
         overlay: {
           backgroundColor: "rgba(0,0,0,0.75)",

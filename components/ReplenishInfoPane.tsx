@@ -1,24 +1,17 @@
 import React, { useMemo, useCallback } from "react";
-import { InfoCardInClient, PlayerInClient } from "@/types/client";
+import { InfoCardInClient } from "@/types/client";
 import classnames from "classnames";
 import { InformationCardStatus, Role } from "@/types/index";
 import { default as InformationCardComponent } from "./InformationCard";
 import { useDispatch, useSelector } from "pages/matches/[...id]";
 import { isEmptyOption } from "@/utils/option";
 
-export interface Props {
-  userId: number;
-  roomId: number;
-  matchesId: number;
-  self?: PlayerInClient;
-}
 
-const ReplenishInfoPane = ({ self }: Props) => {
-  const { optionsSetted, informationCards, selectedNewCardIndex } = useSelector(
-    (state) => ({
-      ...state.replenishPane,
-    })
-  );
+const ReplenishInfoPane = () => {
+  const optionsSetted = useSelector((state) => state.replenishPane.optionsSetted);
+  const informationCards = useSelector((state) => state.replenishPane.informationCards);
+  const selectedNewCardIndex = useSelector((state) => state.replenishPane.selectedNewCardIndex);
+  const self = useSelector(state => state.computed.self);
   const dispatch = useDispatch();
 
   const [showingCards, newCards, discardedCards] = useMemo(() => {
@@ -70,7 +63,7 @@ const ReplenishInfoPane = ({ self }: Props) => {
             card={card}
             option={option}
             className={classnames({
-              "shadow-2xl -translate-y-2":
+              "-translate-y-2":
                 card.status === InformationCardStatus.Pending &&
                 selectedNewCardIndex === card.order - 1,
               "translate-y-2":

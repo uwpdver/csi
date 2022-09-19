@@ -19,7 +19,7 @@ const InformationCard = ({
   option,
   className = "",
   onClickItem,
-  onClick = () => {},
+  onClick = () => { },
 }: Props) => {
   const {
     status,
@@ -30,7 +30,7 @@ const InformationCard = ({
   return (
     <div
       className={classnames(
-        "info-card-container relative font-serif duration-500 transition",
+        "info-card-container relative duration-500 transition",
         {
           "translate-y-2":
             !isHidden &&
@@ -43,14 +43,14 @@ const InformationCard = ({
         transform: isHidden ? "rotateY(180deg)" : "",
       }}
     >
-      <div className="info-card-face">
+      <div className="info-card-face rounded-t-md">
         <div
-          className="bg-black text-white h-8 leading-8 align-middle"
+          className="h-8 leading-8 align-middle info-card-name"
           onClick={onClick.bind(null, orginIndex)}
         >
           {categoryName}
         </div>
-        <ul className="divide-y divide-black">
+        <ul className="divide-y divide-black border-t-black">
           {list.map((info, subIndex) => {
             const hasOption = subIndex === option?.indexOnCard;
             return (

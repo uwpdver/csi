@@ -20,7 +20,7 @@ const Avatar = ({ nickname = "", className = "", size = "md" }: Props) => {
     <div
       className={classnames(
         SizeMap[size],
-        "bg-gray-100 border border-gray-600 rounded-full flex items-center justify-center",
+        "bg-gray-500 rounded-full flex items-center justify-center",
         className
       )}
     >

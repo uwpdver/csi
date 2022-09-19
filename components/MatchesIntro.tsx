@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import dynamic from "next/dynamic";
 import { useDispatch, useSelector } from "pages/matches/[...id]";
 import { PlayerInClient } from "@/types/client";

@@ -11,7 +11,6 @@ import {
 import { useSocket } from "@/lib/socket";
 
 import { Phases, Role } from "@/types/index";
-import { PlayerInClient } from "@/types/client";
 
 import Avatar from "./Avatar";
 import ReplenishInfoFooter from "./ReplenishInfoFooter";
@@ -24,12 +23,9 @@ export const ROLE_TO_TEXT_MAP = {
   [Role.Accomplice]: "帮凶",
 };
 
-interface Props {
-  self?: PlayerInClient;
-  curSpeakerId: number;
-}
+interface Props { curSpeakerId: number; }
 
-const MatchesFooter = ({ self, curSpeakerId }: Props) => {
+const MatchesFooter = ({ curSpeakerId }: Props) => {
   const { userInfo } = useContext(UserInfoContext);
   const { socket } = useSocket();
   const {
@@ -62,6 +58,7 @@ const MatchesFooter = ({ self, curSpeakerId }: Props) => {
       selectFor: state.handCardSelect.selectFor,
     };
   });
+  const self = useSelector(state => state.computed.self);
   const dispatch = useDispatch();
 
   if (!userInfo) return null;

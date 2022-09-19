@@ -6,14 +6,14 @@ interface Props {
   name: string;
   className?: string;
   onClick?(): void;
-  isSelected?: boolean;
+  isHighlight?: boolean;
 }
 
-const HandCard = ({ name, className = "", isSelected, onClick }: Props) => {
+const HandCard = ({ name, className = "", isHighlight, onClick }: Props) => {
   return (
     <li
       className={classnames("hand-card", className, {
-        "transition brightness-50": isSelected,
+        "transition brightness-50": !isHighlight,
       })}
       onClick={onClick}
     >

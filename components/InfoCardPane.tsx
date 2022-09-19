@@ -1,27 +1,21 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "pages/matches/[...id]";
 
 import { default as InformationCardComponent } from "./InformationCard";
 
 import { Phases, Role } from "@/types/index";
-import { InfoCardInClient, PlayerInClient } from "@/types/client";
+import { InfoCardInClient } from "@/types/client";
 
-export interface Props {
-  self?: PlayerInClient;
-}
 
-const InfoCardPane = ({ self }: Props) => {
-  const { showingInformationCards, optionsSetted, phases } = useSelector(
-    (state) => ({
-      showingInformationCards: state.matches.informationCards.slice(0, 6),
-      phases: state.matches.phases,
-      ...state.pointOutInfo,
-    })
-  );
+const InfoCardPane = () => {
+  const canPointOut = useSelector(state =>
+    state.computed.self?.role === Role.Witness
+    && state.matches.phases === Phases.ProvideTestimonials
+  )
+  const isCardHidden = useSelector(state => state.matches.phases < Phases.ProvideTestimonials)
+  const showingInformationCards = useSelector((state) => state.matches.informationCards.slice(0, 6));
+  const optionsSetted = useSelector((state) => state.pointOutInfo.optionsSetted);
   const dispatch = useDispatch();
-
-  const canPointOut =
-    self?.role === Role.Witness && phases === Phases.ProvideTestimonials;
 
   const handleCardClick = useCallback(
     (orginIndex: number, subIndex: number) => {
@@ -41,7 +35,7 @@ const InfoCardPane = ({ self }: Props) => {
       <li className="shrink-0 basis-24" key={index}>
         <InformationCardComponent
           card={card}
-          isHidden={phases < Phases.ProvideTestimonials}
+          isHidden={isCardHidden}
           option={option}
           onClickItem={handleCardClick}
         />

@@ -7,14 +7,17 @@ import {
   PlayerInClient,
 } from "@/types/client";
 
+export type handCardFilter = 'measure' | 'clue' | 'all'
+
 export interface Props {
   isSelf: boolean;
   player: PlayerInClient;
   index: number;
   selectPlayerId: number;
+  filter?: handCardFilter;
 }
 
-const HandCardsPanel = ({ player, selectPlayerId, index, isSelf }: Props) => {
+const HandCardsPanel = ({ player, selectPlayerId, index, isSelf, filter = 'all' }: Props) => {
   const {
     canSelect,
     selectedMeasure,
@@ -51,10 +54,10 @@ const HandCardsPanel = ({ player, selectPlayerId, index, isSelf }: Props) => {
   const measureCardItemRender = ({ measureCardName }: MeasureCardInClient) => (
     <HandCard
       key={measureCardName}
-      className="bg-red-700 text-white"
+      className="measure-card"
       name={measureCardName}
       onClick={hanldeClickCard.bind(null, "measure", measureCardName)}
-      isSelected={isPlayerSelected && measureCardName === selectedMeasure}
+      isHighlight={!canSelect || (isPlayerSelected && measureCardName === selectedMeasure)}
     />
   );
 
@@ -65,10 +68,10 @@ const HandCardsPanel = ({ player, selectPlayerId, index, isSelf }: Props) => {
   ) => (
     <HandCard
       key={clueCardName}
-      className="bg-slate-100"
+      className="clue-card"
       name={clueCardName}
       onClick={hanldeClickCard.bind(null, "clue", clueCardName)}
-      isSelected={isPlayerSelected && clueCardName === selectedClue}
+      isHighlight={!canSelect || (isPlayerSelected && clueCardName === selectedClue)}
     />
   );
 
@@ -78,12 +81,12 @@ const HandCardsPanel = ({ player, selectPlayerId, index, isSelf }: Props) => {
         <div>{player.user.name}</div>
         <div>剩余{player.remainingNumOfSolveCase}次破案机会</div>
       </div>
-      <ul className="grid grid-cols-4 gap-2">
+      {filter === 'clue' || <ul className="grid grid-cols-4 gap-2">
         {player.measureCards.map(measureCardItemRender)}
-      </ul>
-      <ul className="grid grid-cols-4 gap-2">
+      </ul>}
+      {filter === 'measure' || <ul className="grid grid-cols-4 gap-2">
         {player.clueCards.map(clueCardItemRender)}
-      </ul>
+      </ul>}
     </div>
   );
 };

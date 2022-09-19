@@ -156,7 +156,7 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
         <div className="flex-1"> {data.title}</div>
       </div>
       {/* 主体内容区域 */}
-      <div className="flex-1 mt-4 border border-black shadow-sm rounded-md bg-white mx-4">
+      <div className="flex-1 mt-4 rounded-md mx-4 bg-gray-800">
         <ul className=" grid grid-cols-4 gap-4 p-4">
           {users.map((user) => (
             <li key={user.userId}>

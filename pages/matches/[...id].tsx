@@ -7,7 +7,6 @@ import React, {
 } from "react";
 import type { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import ReactModal from "react-modal";
 import classnames from "classnames";
 import nookies from "nookies";
@@ -42,7 +41,7 @@ import {
   ServerGameAllPlayerReady,
   ServerGameStateUpdate,
 } from "@/lib/socket";
-import { MatchesInClient } from "@/types/client";
+import { MatchesInClient, PlayerInClient } from "@/types/client";
 import { Phases, PlayerStatus, Role } from "@/types/index";
 
 import { useConnectToRoom } from "@/utils/useConnectToRoom";
@@ -51,6 +50,8 @@ import { useListRef } from "@/utils/useListRef";
 import MatchesIntro from "@/components/MatchesIntro";
 import MatchesWelcomeModal from "@/components/MatchesWelcomeModal";
 import { useSocket } from "@/lib/socket";
+import AllHandleCardsModal from "@/components/AllHandleCardsModal";
+import GameEndModal from "@/components/GameEndModal";
 
 interface Props {
   matches: MatchesInClient;
@@ -58,16 +59,20 @@ interface Props {
   matchesId: number;
 }
 
+type InitStateWithComputed = InitState & { computed: { self?: PlayerInClient, murder?: PlayerInClient } }
+
+type useSelectorType<S = any> = (cb: (state: InitStateWithComputed) => S) => S;
+
 const MatchesStateContext = React.createContext<{
   getMatchesState: useSelectorType;
-}>({ getMatchesState: () => {} });
+}>({ getMatchesState: () => { } });
 
 const MatchesDispatchContext = React.createContext<{
   dispatch: React.Dispatch<{
     [key: string]: any;
     type: ActionType;
   }>;
-}>({ dispatch: () => {} });
+}>({ dispatch: () => { } });
 
 const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   useConnectToRoom(roomId);
@@ -98,17 +103,16 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
     [players, userInfo?.userId]
   );
 
-  const murder = state.matches.players.find(
+  const murder = useMemo(() => players.find(
     (player) => player.role === Role.Murderer
-  );
+  ), [players]);
 
   const phasesToTitleMap = [
     `开局阶段 ${countDown ? `${countDown}秒后开始行凶` : ""}`,
     "凶手正在行凶",
-    `${
-      self?.role === Role.Witness
-        ? `凶手选择了: ${measure} 和 ${clue}`
-        : "目击者正在提供证词"
+    `${self?.role === Role.Witness
+      ? `凶手选择了: ${measure} 和 ${clue}`
+      : "目击者正在提供证词"
     }`,
     `推理阶段-第${rounds}轮-${playersCanSolve[currentPlayerIndex].user.name}的回合`,
     "帮凶正在行动",
@@ -309,6 +313,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
                 点击<b>【结束回合】</b>可以结束自己的回合，由下一位玩家行动。
               </p>
             ),
+            position: 'top',
           },
         ],
       });
@@ -409,8 +414,8 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   return (
     <MatchesStateContext.Provider
       value={{
-        getMatchesState: (callback: (state: InitState) => any) =>
-          callback(state),
+        getMatchesState: (callback: (state: InitStateWithComputed) => any) =>
+          callback({ ...state, computed: { self, murder } }),
       }}
     >
       <MatchesDispatchContext.Provider value={{ dispatch }}>
@@ -419,20 +424,6 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
           <ReactModal
             isOpen={phases === Phases.AdditionalTestimonials}
             preventScroll={true}
-            className="p-4 bg-transparent inset-0 absolute"
-            overlayClassName="fixed inset-0 backdrop-blur-sm bg-white bg-opacity-75"
-          >
-            <ReplenishInfoPane
-              userId={userInfo.userId}
-              roomId={roomId}
-              matchesId={matchesId}
-              self={self}
-            />
-          </ReactModal>
-          <ReactModal
-            isOpen={
-              Phases.DetectiveWin === phases || Phases.MurdererWin === phases
-            }
             style={{
               content: {
                 background: "none",
@@ -440,57 +431,17 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
                 inset: 0,
               },
               overlay: {
-                backgroundColor: "rgba(0,0,0,0.75)",
-                zIndex: 99,
-                backdropFilter: "blur(4px)",
+                // zIndex: 0,
+                backgroundColor: '#101420',
+                overflowY: 'hidden',
               },
             }}
           >
-            <div className="text-center">
-              <div className="m-4 text-yellow-100 text-xl -mb-8">
-                <div>{`凶手是：${murder?.user.name}`}</div>
-                <div>{`选择了：【${measure}】和【${clue}】`}</div>
-              </div>
-              <Image
-                src="/images/confetti_ball_3d.png"
-                alt=""
-                width={200}
-                height={200}
-              />
-              <Image
-                src={
-                  Phases.DetectiveWin === phases
-                    ? "/images/detective_3d_default.png"
-                    : "/images/bust_in_silhouette_3d.png"
-                }
-                alt=""
-                width={200}
-                height={200}
-              />
-              <div
-                className={classnames(
-                  "text-3xl text-yellow-100 h-16 rounded-full flex items-center font-bold justify-center w-fit mx-auto px-10 -mt-5 min-w-[240px]",
-                  {
-                    "bg-blue-400": Phases.DetectiveWin === phases,
-                    "bg-gray-800": Phases.DetectiveWin !== phases,
-                  }
-                )}
-              >
-                {Phases.DetectiveWin === phases ? "侦探胜利" : "凶手胜利"}
-              </div>
-              <button
-                className="mt-4 h-16 min-w-[240px] rounded-full text-2xl"
-                onClick={handleQuitMatchesBtnClick}
-              >
-                退出对局
-              </button>
-            </div>
+            <ReplenishInfoPane />
           </ReactModal>
-          <MatchesWelcomeModal
-            isOpen={isWelcomeModalOpen}
-            self={self}
-            onOKBtnClick={handleKnowItBtnClick}
-          />
+
+          <GameEndModal onClose={handleQuitMatchesBtnClick} />
+          <MatchesWelcomeModal isOpen={isWelcomeModalOpen} onOKBtnClick={handleKnowItBtnClick} />
 
           {/* 顶部标题栏 */}
           <header className="text-center mt-2 mx-4 mb-2 truncate overflow-hidden">
@@ -500,9 +451,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
           {/* 内容区域 */}
           <div className="flex-1 overflow-y-auto pb-16 px-4">
             <div className="pt-4"></div>
-
-            <InfoCardPane self={self} />
-
+            <InfoCardPane />
             <ul
               data-intro-id="hand-cards-container"
               className="flex flex-nowrap space-x-4 mt-4 py-2 w-full overflow-x-scroll snap-x"
@@ -522,25 +471,29 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
                 </li>
               ))}
             </ul>
-
-            <ul className="mt-2 mb-8 flex items-center justify-center space-x-4">
-              {playersCanSolve.map((player, index) => (
-                <li
-                  key={player.id}
-                  onClick={scrollHandCardToView.bind(null, index)}
-                >
-                  <Avatar className="shadow-md" nickname={player.user.name} />
-                </li>
-              ))}
-            </ul>
+            <div className="flex items-center mt-2 mb-8">
+              <ul className="flex-1  flex items-center justify-center space-x-4">
+                {playersCanSolve.map((player, index) => (
+                  <li
+                    key={player.id}
+                    onClick={scrollHandCardToView.bind(null, index)}
+                  >
+                    <Avatar className="shadow-md" nickname={player.user.name} />
+                  </li>
+                ))}
+              </ul>
+              <AllHandleCardsModal >
+                <button className="">展开</button>
+              </AllHandleCardsModal>
+            </div>
           </div>
 
           {/* 底部命令栏 */}
           <div
             className={classnames(
-              "fixed bottom-0 right-0 left-0 bg-gray-100 z-10 border-t border-t-black h-16 px-4 py-2",
+              "h-16 px-4 py-2",
               {
-                "bg-transparent": phases === Phases.AdditionalTestimonials,
+                "bg-transparent fixed bottom-0 right-0 left-0 z-10": phases === Phases.AdditionalTestimonials,
               }
             )}
           >
@@ -548,10 +501,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
               data-intro-id="matches-footer"
               className="flex items-center space-x-2 "
             >
-              <MatchesFooter
-                self={self}
-                curSpeakerId={playersCanSolve[currentPlayerIndex].id}
-              />
+              <MatchesFooter curSpeakerId={playersCanSolve[currentPlayerIndex].id}/>
             </div>
           </div>
         </>
@@ -560,9 +510,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   );
 };
 
-type useSelectorType<S = any> = (cb: (state: InitState) => S) => S;
-
-export function useSelector<S = any>(callback: (state: InitState) => S): S {
+export function useSelector<S = any>(callback: (state: InitStateWithComputed) => S): S {
   const { getMatchesState } = useContext(MatchesStateContext);
   const cb = useCallback(callback, []);
   const selected = useMemo(() => getMatchesState(cb), [cb, getMatchesState]);

@@ -8,6 +8,16 @@ body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  @apply bg-base text-white text-opacity-75;
+  background-image: radial-gradient(rgba(49, 61, 94, 0.75), transparent);
+  background-repeat: no-repeat;
+
+}
+
+@layer base {
+  :root {
+    --color-base: 16 20 32; 
+  }
 }
 
 a {
@@ -19,33 +29,43 @@ a {
   box-sizing: border-box;
 }
 
-button[type="submit"] {
-  @apply bg-white;
-}
 
 button {
-  @apply border border-black h-10 px-2 bg-white shadow rounded-sm disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-200 disabled:shadow-none;
+  @apply h-10 px-2 bg-gray-700 rounded min-w-[64px];
+}
+
+button[type="submit"] {
+  @apply bg-gray-700;
 }
 
 .link {
-  color: #836e4d;
-  @apply border-none h-auto px-0 bg-none shadow-none rounded-none disabled:bg-none;
+  @apply border-none h-auto px-0 text-gray-400 rounded-none disabled:bg-none;
 }
 
 input {
-  @apply border border-black h-10 px-2 rounded-sm;
+  @apply h-10 px-2 rounded bg-gray-800;
 }
 
 input:not(:last-child) {
   @apply border-r-0 rounded-r-none;
 }
 
-input + button {
-  @apply shadow-none rounded-l-none;
+input+button {
+  @apply rounded-l-none;
 }
 
 .hand-card {
-  @apply border border-black rounded-md aspect-[3/4] text-center p-2 shadow-md font-serif;
+  @apply rounded aspect-[3/4] text-center p-2 font-serif shadow-md border border-base border-opacity-75;
+}
+
+.measure-card {
+  @apply bg-red-800 text-white;
+  background-image: radial-gradient(transparent, #35010190);
+}
+
+.clue-card {
+  @apply bg-slate-200 text-[#111];
+  background-image: radial-gradient(transparent, #92929290);
 }
 
 .info-card-container {
@@ -54,11 +74,61 @@ input + button {
 }
 
 .info-card-face {
-  @apply bg-[#eed7b3] overflow-hidden rounded-md shadow-md border border-black;
+  @apply bg-[#384570] bg-opacity-50 overflow-hidden rounded-md shadow-md border border-base border-opacity-75;
   -webkit-backface-visibility: hidden;
+}
+
+.info-card-name {
+  @apply bg-[#12182c];
 }
 
 .info-card-face-back {
   @apply flex items-center justify-center absolute inset-0;
   transform: rotateY(180deg);
+}
+
+body .introjs-tooltip {
+  @apply bg-gray-800;
+}
+
+body .introjs-arrow.bottom,
+body .introjs-arrow.bottom-right,
+body .introjs-arrow.bottom-middle,
+body .introjs-arrow.bottom-left, {
+  @apply border-t-gray-800;
+}
+
+body .introjs-arrow.top, 
+body .introjs-arrow.top-right,
+body .introjs-arrow.top-middle,
+body .introjs-arrow.top-left,
+ {
+  @apply border-b-gray-800;
+}
+
+body .introjs-arrow.left {
+  @apply border-r-gray-800;
+}
+
+body .introjs-arrow.right {
+  @apply border-l-gray-800;
+}
+
+body .introjs-tooltip-header {
+  @apply hidden;
+}
+
+body .introjs-tooltipbuttons {
+  @apply border-none;
+}
+
+.introjs-overlay {
+  background-color: rgba(0,0,0,0.75);
+}
+
+.introjs-tooltipbuttons .introjs-button:focus,
+.introjs-tooltipbuttons .introjs-button {
+  padding: 0;
+  @apply h-10 px-2 bg-gray-700 rounded min-w-[64px] text-white text-center border-none leading-10;
+  text-shadow: none;
 }
