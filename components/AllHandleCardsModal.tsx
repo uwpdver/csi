@@ -3,6 +3,7 @@ import ReactModal from "react-modal";
 import HandCardsPanel, { handCardFilter } from "./HandCardsPanel";
 import { useSelector } from 'pages/matches/[...id]';
 import { Role } from "@/types/index";
+import { default as Header } from './MatchesHeader';
 
 const allFilters: { name: string, filter: handCardFilter }[] = [{
   name: '查看全部',
@@ -31,12 +32,16 @@ const AllHandleCardsModal = ({ children }: { children?: React.ReactNode }) => {
 
   return (
     <>
-      <ReactModal isOpen={isOpen}
+      <ReactModal
+        isOpen={isOpen}
         style={{
           content: {
             background: "none",
+            display: 'flex',
+            flexDirection: 'column',
             border: "none",
             inset: 0,
+            padding: '0 16px',
           },
           overlay: {
             zIndex: 99,
@@ -44,8 +49,10 @@ const AllHandleCardsModal = ({ children }: { children?: React.ReactNode }) => {
             backdropFilter: 'blur(4px)',
             overflowY: 'hidden',
           },
-        }}>
-        <ul className="space-y-2  mb-16">
+        }}
+      >
+        <Header>全部手牌</Header>
+        <ul className="space-y-2 overflow-y-auto flex-1">
           {playersCanSolve.map((player, index) => (
             <li
               key={player.id}
@@ -60,9 +67,9 @@ const AllHandleCardsModal = ({ children }: { children?: React.ReactNode }) => {
             </li>
           ))}
         </ul>
-        <div className="h-16 fixed bottom-0 left-0 right-0 flex items-center justify-center space-x-4">
-          <button onClick={toggleFilter}>{allFilters[(filterIndex + 1) % allFilters.length].name}</button>
-          <button onClick={()=>setIsOpen(false)}>关闭</button>
+        <div className="h-16 flex items-center justify-end space-x-2">
+          <button className="flex-1" onClick={toggleFilter}>{allFilters[(filterIndex + 1) % allFilters.length].name}</button>
+          <button className="flex-1" onClick={() => setIsOpen(false)}>关闭</button>
         </div>
       </ReactModal>
       {React.Children.map(children, (child) => {

@@ -7,7 +7,6 @@ import React, {
 } from "react";
 import type { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import ReactModal from "react-modal";
 import classnames from "classnames";
 import nookies from "nookies";
 
@@ -16,9 +15,14 @@ import * as matchesServices from "pages/api/matches/services";
 
 import InfoCardPane from "@/components/InfoCardPane";
 import HandCardsPanel from "@/components/HandCardsPanel";
-import ReplenishInfoPane from "@/components/ReplenishInfoPane";
+import ReplenishInfoModal from "@/components/ReplenishInfoModal";
 import MatchesFooter from "@/components/MatchesFooter";
 import Avatar from "@/components/Avatar";
+import MatchesIntro from "@/components/MatchesIntro";
+import MatchesWelcomeModal from "@/components/MatchesWelcomeModal";
+import AllHandleCardsModal from "@/components/AllHandleCardsModal";
+import GameEndModal from "@/components/GameEndModal";
+import { default as Header } from "@/components/MatchesHeader";
 import { getLayout } from "@/components/Layout";
 
 import reducer from "@/reducers/index";
@@ -47,11 +51,7 @@ import { Phases, PlayerStatus, Role } from "@/types/index";
 import { useConnectToRoom } from "@/utils/useConnectToRoom";
 import { useCountDown } from "@/utils/useCountDown";
 import { useListRef } from "@/utils/useListRef";
-import MatchesIntro from "@/components/MatchesIntro";
-import MatchesWelcomeModal from "@/components/MatchesWelcomeModal";
 import { useSocket } from "@/lib/socket";
-import AllHandleCardsModal from "@/components/AllHandleCardsModal";
-import GameEndModal from "@/components/GameEndModal";
 
 interface Props {
   matches: MatchesInClient;
@@ -214,6 +214,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
       case Phases.AdditionalTestimonials:
         dispatch({ type: "SYNC_REPLENISH_INFO" });
         if (self?.role === Role.Witness) {
+          dispatch({ type: "OPEN_REPLENISH_INFO_MODAL" });
         }
         break;
       default:
@@ -421,36 +422,15 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
       <MatchesDispatchContext.Provider value={{ dispatch }}>
         <>
           {self && <MatchesIntro self={self} />}
-          <ReactModal
-            isOpen={phases === Phases.AdditionalTestimonials}
-            preventScroll={true}
-            style={{
-              content: {
-                background: "none",
-                border: "none",
-                inset: 0,
-              },
-              overlay: {
-                // zIndex: 0,
-                backgroundColor: '#101420',
-                overflowY: 'hidden',
-              },
-            }}
-          >
-            <ReplenishInfoPane />
-          </ReactModal>
-
+          <ReplenishInfoModal />
           <GameEndModal onClose={handleQuitMatchesBtnClick} />
           <MatchesWelcomeModal isOpen={isWelcomeModalOpen} onOKBtnClick={handleKnowItBtnClick} />
 
           {/* 顶部标题栏 */}
-          <header className="text-center mt-2 mx-4 mb-2 truncate overflow-hidden">
-            {phasesToTitleMap[phases]}
-          </header>
+          <Header>{phasesToTitleMap[phases]}</Header>
 
           {/* 内容区域 */}
           <div className="flex-1 overflow-y-auto pb-16 px-4">
-            <div className="pt-4"></div>
             <InfoCardPane />
             <ul
               data-intro-id="hand-cards-container"
@@ -471,8 +451,12 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
                 </li>
               ))}
             </ul>
+
             <div className="flex items-center mt-2 mb-8">
-              <ul className="flex-1  flex items-center justify-center space-x-4">
+              <AllHandleCardsModal >
+                <button className="">展开</button>
+              </AllHandleCardsModal>
+              <ul className="flex-1  flex items-center justify-end space-x-4 overflow-x-auto">
                 {playersCanSolve.map((player, index) => (
                   <li
                     key={player.id}
@@ -482,9 +466,6 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
                   </li>
                 ))}
               </ul>
-              <AllHandleCardsModal >
-                <button className="">展开</button>
-              </AllHandleCardsModal>
             </div>
           </div>
 
@@ -493,7 +474,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
             className={classnames(
               "h-16 px-4 py-2",
               {
-                "bg-transparent fixed bottom-0 right-0 left-0 z-10": phases === Phases.AdditionalTestimonials,
+                "bg-transparent fixed bottom-0 right-0 left-0 z-10": state.isReplenishModalOpen,
               }
             )}
           >
@@ -501,7 +482,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
               data-intro-id="matches-footer"
               className="flex items-center space-x-2 "
             >
-              <MatchesFooter curSpeakerId={playersCanSolve[currentPlayerIndex].id}/>
+              <MatchesFooter curSpeakerId={playersCanSolve[currentPlayerIndex].id} />
             </div>
           </div>
         </>

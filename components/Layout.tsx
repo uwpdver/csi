@@ -10,7 +10,7 @@ const Layout = ({ children }: Props) => {
 
   return (
     <div
-      className="flex flex-col pb-4 overflow-hidden"
+      className="flex flex-col overflow-hidden"
       style={{ height: windowHeight }}
     >
       {children}

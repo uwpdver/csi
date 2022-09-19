@@ -109,7 +109,7 @@ const Home: NextPageWithLayout<Props> = (props) => {
           </button>
         </form>
       </div>
-      <SiteFooter className="mx-4 mt-8" />
+      <SiteFooter className="mx-4 mt-8 mb-4" />
     </>
   );
 };

@@ -13,7 +13,7 @@ import { isEmptyOption } from "@/utils/option";
 
 import Option from "./Option";
 
-const ReplenishInfoFooter = ({ playerId }: { playerId?: number }) => {
+const ReplenishInfoFooter = () => {
   const { userInfo } = useContext(UserInfoContext);
   const {
     roomId,
@@ -32,6 +32,7 @@ const ReplenishInfoFooter = ({ playerId }: { playerId?: number }) => {
       .slice(6)
       .filter(({ status }) => status === InformationCardStatus.Pending),
   }));
+  const playerId = useSelector(state => state.computed.self?.id);
   const dispatch = useDispatch();
   const { socket } = useSocket();
 
@@ -52,6 +53,7 @@ const ReplenishInfoFooter = ({ playerId }: { playerId?: number }) => {
       options: changedOptions,
       informationCards: changedInfoCards,
     });
+    dispatch({ type: "CLOSE_REPLENISH_INFO_MODAL" });
   };
 
   const hanleClickOptionNotSet = (index: number, e: React.MouseEvent) => {
@@ -72,6 +74,7 @@ const ReplenishInfoFooter = ({ playerId }: { playerId?: number }) => {
         status: InformationCardStatus.Discard,
       })),
     });
+    dispatch({ type: "CLOSE_REPLENISH_INFO_MODAL" });
   };
 
   // 撤销更改
@@ -88,35 +91,35 @@ const ReplenishInfoFooter = ({ playerId }: { playerId?: number }) => {
     />
   );
 
-  return (
-    <>
-      <ul
-        data-intro-id="replenish-info-footer__options"
-        className="flex flex-1 space-x-2 mx-2 mr-auto"
-      >
-        {optionsNotSet.map(optionItemRender)}
-      </ul>
-      {pendingCards.length === 0 && (
-        <button
-          data-intro-id="replenish-info-footer__reset-btn"
-          onClick={handleReset}
+    return (
+      <>
+        <ul
+          data-intro-id="replenish-info-footer__options"
+          className="flex flex-1 space-x-2 mx-2 mr-auto"
         >
-          撤销
+          {optionsNotSet.map(optionItemRender)}
+        </ul>
+        {pendingCards.length === 0 && (
+          <button
+            data-intro-id="replenish-info-footer__reset-btn"
+            onClick={handleReset}
+          >
+            撤销
+          </button>
+        )}
+        <button data-intro-id="replenish-info-footer__quit" onClick={handleQuit}>
+          放弃
         </button>
-      )}
-      <button data-intro-id="replenish-info-footer__quit" onClick={handleQuit}>
-        放弃
-      </button>
-      {pendingCards.length === 0 && optionsNotSet.length === 0 && (
-        <button
-          data-intro-id="replenish-info-footer__ok"
-          onClick={handleConfirm}
-        >
-          确定
-        </button>
-      )}
-    </>
-  );
+        {pendingCards.length === 0 && optionsNotSet.length === 0 && (
+          <button
+            data-intro-id="replenish-info-footer__ok"
+            onClick={handleConfirm}
+          >
+            确定
+          </button>
+        )}
+      </>
+    );
 };
 
 export default ReplenishInfoFooter;

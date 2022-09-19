@@ -37,7 +37,10 @@ export type ActionType =
   | "INTRO_HIDE"
   // 开局弹窗
   | "OPEN_WELCOME_MODAL"
-  | "CLOSE_WELCOME_MODAL";
+  | "CLOSE_WELCOME_MODAL"
+  // 补充信息弹窗弹窗
+  | "OPEN_REPLENISH_INFO_MODAL"
+  | "CLOSE_REPLENISH_INFO_MODAL";
 
 type SelectFor = "murder" | "solveCase";
 
@@ -67,6 +70,7 @@ export type Intro = {
 
 export type InitState = {
   isWelcomeModalOpen: boolean;
+  isReplenishModalOpen: boolean;
   matches: MatchesInClient;
   handCardSelect: {
     canSelect: boolean;
@@ -131,6 +135,7 @@ export const savaIntroCompletedKeysToStorage = (data: object) => {
 
 export const initState = {
   isWelcomeModalOpen: false,
+  isReplenishModalOpen: false,
   matches: {
     players: [],
     informationCards: [],
@@ -444,6 +449,16 @@ export const reducer = (state: InitState, action: Action<ActionType>) => {
       return {
         ...state,
         isWelcomeModalOpen: false,
+      };
+    case "OPEN_REPLENISH_INFO_MODAL":
+      return {
+        ...state,
+        isReplenishModalOpen: true,
+      };
+    case "CLOSE_REPLENISH_INFO_MODAL":
+      return {
+        ...state,
+        isReplenishModalOpen: false,
       };
     default:
       return state;

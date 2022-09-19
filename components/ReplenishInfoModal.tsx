@@ -1,13 +1,16 @@
 import React, { useMemo, useCallback } from "react";
-import { InfoCardInClient } from "@/types/client";
 import classnames from "classnames";
+import ReactModal from "react-modal";
+import { InfoCardInClient } from "@/types/client";
 import { InformationCardStatus, Role } from "@/types/index";
-import { default as InformationCardComponent } from "./InformationCard";
 import { useDispatch, useSelector } from "pages/matches/[...id]";
 import { isEmptyOption } from "@/utils/option";
+import { default as InformationCardComponent } from "./InformationCard";
+import { default as Header } from "./MatchesHeader";
 
 
-const ReplenishInfoPane = () => {
+const ReplenishInfoModal = () => {
+  const isOpen = useSelector((state) => state.isReplenishModalOpen);
   const optionsSetted = useSelector((state) => state.replenishPane.optionsSetted);
   const informationCards = useSelector((state) => state.replenishPane.informationCards);
   const selectedNewCardIndex = useSelector((state) => state.replenishPane.selectedNewCardIndex);
@@ -102,31 +105,43 @@ const ReplenishInfoPane = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <header></header>
-      <header className="text-center mx-4 mb-2 truncate overflow-hidden">
-        目击证人正在补充证词
-      </header>
-      <div className="flex-1">
-        {/* 场上的场景卡 */}
-        <ul
-          data-intro-id="replaceable-info-cards-container"
-          className="flex flex-nowrap overflow-x-scroll text-center relative space-x-2 pb-2"
-        >
-          {showingCards.map(cardItemRender)}
-        </ul>
-        {/* 其他卡片 */}
-        <div className="flex space-x-2">
-          {notShowingCardPaneRender(
-            "新增的场景卡",
-            newCards,
-            "new-info-cards-container"
-          )}
-          {notShowingCardPaneRender("废弃的场景卡", discardedCards)}
+    <ReactModal
+      isOpen={isOpen}
+      style={{
+        content: {
+          background: "none",
+          border: "none",
+          inset: 0,
+          padding: 0,
+        },
+        overlay: {
+          backgroundColor: '#101420',
+          overflowY: 'hidden',
+        },
+      }}>
+      <div className="flex flex-col h-full px-4">
+        <Header>目击证人正在补充证词</Header>
+        <div className="flex-1">
+          {/* 场上的场景卡 */}
+          <ul
+            data-intro-id="replaceable-info-cards-container"
+            className="flex flex-nowrap overflow-x-scroll text-center relative space-x-2 pb-2"
+          >
+            {showingCards.map(cardItemRender)}
+          </ul>
+          {/* 其他卡片 */}
+          <div className="flex space-x-2">
+            {notShowingCardPaneRender(
+              "新增的场景卡",
+              newCards,
+              "new-info-cards-container"
+            )}
+            {notShowingCardPaneRender("废弃的场景卡", discardedCards)}
+          </div>
         </div>
       </div>
-    </div>
+    </ReactModal>
   );
 };
 
-export default React.memo(ReplenishInfoPane);
+export default React.memo(ReplenishInfoModal);

@@ -10,14 +10,14 @@ interface Props {
   onClose?: () => void,
 }
 
-const GameEndModal = ({ isOpen = false, onClose = () => { } }: Props) => {
-  const phases = useSelector(state=> state.matches.phases);
-  const measure = useSelector(state=> state.matches.measure);
-  const clue = useSelector(state=> state.matches.clue);
-  const murderName = useSelector(state => state.computed.murder?.user.name) 
+const GameEndModal = ({ onClose = () => { } }: Props) => {
+  const phases = useSelector(state => state.matches.phases);
+  const measure = useSelector(state => state.matches.measure);
+  const clue = useSelector(state => state.matches.clue);
+  const murderName = useSelector(state => state.computed.murder?.user.name)
   return (
     <ReactModal
-      isOpen={isOpen}
+      isOpen={phases === Phases.MurdererWin || phases === Phases.DetectiveWin}
       style={{
         content: {
           background: "none",

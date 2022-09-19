@@ -29,6 +29,7 @@ const MatchesFooter = ({ curSpeakerId }: Props) => {
   const { userInfo } = useContext(UserInfoContext);
   const { socket } = useSocket();
   const {
+    isReplenishModalOpen,
     matchesId,
     roomId,
     murder,
@@ -45,6 +46,7 @@ const MatchesFooter = ({ curSpeakerId }: Props) => {
       (player) => player.role === Role.Murderer
     );
     return {
+      isReplenishModalOpen: state.isReplenishModalOpen,
       matchesId: state.matches.id,
       roomId: state.matches.roomId,
       murder,
@@ -102,6 +104,15 @@ const MatchesFooter = ({ curSpeakerId }: Props) => {
     dispatch({ type: "RESET_HAND_CARD_SELECT" });
   };
 
+  // 点击取消破案按钮
+  const handleCloseReplenishInfoModal = () => {
+    if (isReplenishModalOpen) {
+      dispatch({ type: "CLOSE_REPLENISH_INFO_MODAL" });
+    } else {
+      dispatch({ type: "OPEN_REPLENISH_INFO_MODAL" });
+    }
+  };
+
   // 点击结束本回合按钮
   const handleEndTheTurn = () => {
     if (self) {
@@ -120,7 +131,7 @@ const MatchesFooter = ({ curSpeakerId }: Props) => {
   }
 
   if (phases === Phases.AdditionalTestimonials && self?.role === Role.Witness) {
-    return <ReplenishInfoFooter playerId={self.id} />;
+    return <ReplenishInfoFooter />;
   }
 
   if (canSelect) {
@@ -176,6 +187,11 @@ const MatchesFooter = ({ curSpeakerId }: Props) => {
               <span className="font-bold">{clue}</span>
             </div>
           </div>
+        )}
+        {phases === Phases.AdditionalTestimonials && (
+          <>
+            <button onClick={handleCloseReplenishInfoModal}>{isReplenishModalOpen ? '返回' : '查看新增信息卡'}</button>
+          </>
         )}
       </>
     );

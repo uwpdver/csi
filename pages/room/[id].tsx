@@ -191,7 +191,7 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
                 开始
               </button>
             )}
-            <button className="w-full mt-4" onClick={handleReadyBtnClick}>
+            <button className="w-full mt-4 mb-4" onClick={handleReadyBtnClick}>
               {isReady ? "取消准备" : "准备"}
             </button>
           </>
