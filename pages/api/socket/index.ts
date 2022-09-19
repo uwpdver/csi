@@ -18,9 +18,9 @@ type Response = NextApiResponse & {
 
 export default function handler(req: NextApiRequest, res: Response) {
   if (res.socket.server.io) {
-    console.log("Socket is already running");
+    console.log("Socket 正在运行");
   } else {
-    console.log("Socket is initializing");
+    console.log("Socket 正在初始化");
     const io = new Server<
       ClientToServerEvents,
       ServerToClientEvents,

@@ -42,7 +42,6 @@ import {
 } from "@/lib/socket/constants";
 
 import { PlayerStatus } from "@/types/index";
-import { isAsyncFunction } from "util/types";
 import * as roomServices from "../room/services";
 import * as matchesServices from "../matches/services";
 
@@ -60,18 +59,21 @@ export function socketController(
     SocketData
   >
 ) {
+  // 用户加入到websocket房间
   const joinWsRoom = (roomId: number) => {
     if (!socket?.rooms.has(String(roomId))) {
       socket?.join(String(roomId));
     }
   };
 
+  // 用户从websocket房间离开
   const leaveWsRoom = (roomId: number) => {
     if (socket?.rooms.has(String(roomId))) {
       socket?.leave(String(roomId));
     }
   };
 
+  // 用户进入房间
   const enterRoom: ClientEnterRoomHander = async (userId, roomId) => {
     const room = await roomServices.enterRoom(userId, roomId);
     io?.to(String(roomId)).emit(BCST_UPDATE_USERS_IN_ROOM, {
@@ -79,6 +81,7 @@ export function socketController(
     });
   };
 
+  // 用户离开房间
   const leaveRoom: ClientLeaveRoomHander = async (userId, roomId) => {
     const room = await roomServices.leaveRoom(userId, roomId);
     if (room) {
@@ -88,6 +91,7 @@ export function socketController(
     }
   };
 
+  // 用户准备状态改变
   const changeUserReadyState: ClientChangeReadyStateHander = async (
     userId,
     isReady
@@ -99,6 +103,7 @@ export function socketController(
     });
   };
 
+  // 创建一局新游戏
   const createGame: ClientCreateGameHander = async (userId, roomId) => {
     const { id } = await matchesServices.createGame(userId, roomId);
     io?.to(String(roomId)).emit(BCST_START_GAME, { id });
@@ -121,6 +126,7 @@ export function socketController(
     }
   };
 
+  // 凶手行凶
   const murderInGame: ClientGameMurderHander = async ({
     userId,
     roomId,
@@ -132,6 +138,7 @@ export function socketController(
     io?.to(String(roomId)).emit(BCST_GAME_STATE_UPDATE, matches);
   };
 
+  // 目击者提供信息
   const pointOutInformation: ClientGamePointOutInformation = async ({
     userId,
     roomId,
@@ -147,6 +154,7 @@ export function socketController(
     io?.to(String(roomId)).emit(BCST_GAME_STATE_UPDATE, matches);
   };
 
+  // 目击者补充信息
   const replenishInfo: ClientGameReplenishInformation = async ({
     userId,
     roomId,
@@ -164,6 +172,7 @@ export function socketController(
     io?.to(String(roomId)).emit(BCST_GAME_STATE_UPDATE, matches);
   };
 
+  // 破案
   const solveCase: ClientGameSolveCase = async ({
     userId,
     roomId,
@@ -183,6 +192,7 @@ export function socketController(
     io?.to(String(roomId)).emit(BCST_GAME_STATE_UPDATE, matches);
   };
 
+  // 结束本次发言
   const endThisTurn: ClientGameNextSpeaker = async ({
     userId,
     roomId,
@@ -198,8 +208,10 @@ export function socketController(
     io?.to(String(roomId)).emit(BCST_GAME_STATE_UPDATE, matches);
   };
 
+  // 帮凶
   const accomplice = async () => {};
 
+  // 退出游戏
   const quitGame: ClientGameQuit = async (playerId, roomId, matchesId) => {
     const matches = await matchesServices.quitGame(playerId, matchesId);
     if (matches) {
@@ -210,67 +222,38 @@ export function socketController(
   };
 
   const catchError = (fn: Function) => {
-    if (isAsyncFunction(fn)) {
-      return async function (...args: any) {
-        try {
-          return await fn.apply(null, args);
-        } catch (error) {
-          if (error instanceof Error) {
-            socket.emit(BCST_ERROR, { message: error.message });
-          }
+    return function (...args: any[]) {
+      try {
+        const result = fn.apply(null, args);
+        if (result instanceof Promise) {
+          return result.catch((error) => {
+            if (error instanceof Error) {
+              socket.emit(BCST_ERROR, { message: error.message });
+            }
+          });
+        } else {
+          return result;
         }
-      };
-    } else {
-      return function (...args: any) {
-        try {
-          return fn.apply(null, args);
-        } catch (error) {
-          if (error instanceof Error) {
-            socket.emit(BCST_ERROR, { message: error.message });
-          }
+      } catch (error) {
+        if (error instanceof Error) {
+          socket.emit(BCST_ERROR, { message: error.message });
         }
-      };
-    }
+      }
+    };
   };
 
-  // 用户加入到websocket房间
   socket.on(ACTION_CONNECT_ROOM, catchError(joinWsRoom));
-
-  // 用户从websocket房间离开
   socket.on(ACTION_DISCONNECT_ROOM, catchError(leaveWsRoom));
-
-  // 用户进入房间
   socket.on(ACTION_ENTER_ROOM, catchError(enterRoom));
-
-  // 用户离开房间
   socket.on(ACTION_LEAVE_ROOM, catchError(leaveRoom));
-
-  // 用户准备状态改变
   socket.on(ACTION_CHANGE_READY_STATE, catchError(changeUserReadyState));
-
-  // 创建一局新游戏
   socket.on(ACTION_CREATE_GAME, catchError(createGame));
-
   socket.on(ACTION_GAME_READY, catchError(readyForGame));
-
-  // 凶手行凶
   socket.on(ACTION_GAME_MURDER, catchError(murderInGame));
-
-  // 目击者提供信息
   socket.on(ACTION_GAME_PROVIDE_TESTIMONIALS, catchError(pointOutInformation));
-
-  // 目击者补充信息
   socket.on(ACTION_GAME_ADDITIONAL_TESTIMONIALS, catchError(replenishInfo));
-
-  // 破案
   socket.on(ACTION_GAME_SOLVE_CASE, catchError(solveCase));
-
-  // 帮凶
   socket.on(ACTION_GAME_ACCOMPLICE, catchError(accomplice));
-
-  // 退出游戏
   socket.on(ACTION_GAME_QUIT, catchError(quitGame));
-
-  // 结束本次发言
   socket.on(ACTION_GAME_NEXT_SPEAKER, catchError(endThisTurn));
 }
