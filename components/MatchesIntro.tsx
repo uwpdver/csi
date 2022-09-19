@@ -32,7 +32,7 @@ const MatchesIntro = () => {
   
   // 行凶阶段的凶手
   useEffect(() => {
-    if (Phases.Murder && role === Role.Murderer) {
+    if (phases === Phases.Murder && role === Role.Murderer) {
       setTimeout(
         () =>
           dispatch({
