@@ -1,20 +1,31 @@
 import React from 'react';
 import ReactModal from 'react-modal';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import classnames from 'classnames';
 import { Phases } from '@/types/index';
+import { useSocket } from '@/lib/socket';
 import { useSelector } from 'pages/matches/[...id]';
+import { ACTION_GAME_QUIT } from '@/lib/socket/constants';
 
-interface Props {
-  isOpen?: boolean,
-  onClose?: () => void,
-}
-
-const GameEndModal = ({ onClose = () => { } }: Props) => {
+const GameEndModal = () => {
+  const { socket } = useSocket();
+  const router = useRouter()
   const phases = useSelector(state => state.matches.phases);
   const measure = useSelector(state => state.matches.measure);
   const clue = useSelector(state => state.matches.clue);
-  const murderName = useSelector(state => state.computed.murder?.user.name)
+  const murderName = useSelector(state => state.computed.murder?.user.name);
+  const selfPlayerId = useSelector(state => state.computed.self?.id);
+  const matchesId = useSelector(state => state.matches.id);
+  const roomId = useSelector(state => state.matches.roomId);
+
+  const handleQuitMatchesBtnClick = () => {
+    if (selfPlayerId) {
+      socket?.emit(ACTION_GAME_QUIT, selfPlayerId, roomId, matchesId);
+    }
+    router.replace(`/room/${roomId}`);
+  };
+
   return (
     <ReactModal
       isOpen={phases === Phases.MurdererWin || phases === Phases.DetectiveWin}
@@ -66,7 +77,7 @@ const GameEndModal = ({ onClose = () => { } }: Props) => {
         </div>
         <button
           className="mt-4 h-16 min-w-[240px] rounded-full text-2xl"
-          onClick={onClose}
+          onClick={handleQuitMatchesBtnClick}
         >
           退出对局
         </button>

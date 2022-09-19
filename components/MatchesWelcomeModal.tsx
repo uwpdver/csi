@@ -1,18 +1,34 @@
-import React from "react";
+import React, {useEffect} from "react";
 import ReactModal from "react-modal";
-import { PlayerInClient } from "@/types/client";
-import { Role } from "@/types/index";
-import { useSelector } from "pages/matches/[...id]";
+import { Phases, PlayerStatus, Role } from "@/types/index";
+import { useSocket } from "@/lib/socket";
+import { ACTION_GAME_READY } from "@/lib/socket/constants";
+import { useDispatch, useSelector } from "pages/matches/[...id]";
 
-const MatchesWelcomeModal = ({
-  isOpen = false,
-  onOKBtnClick = () => {},
-}: {
-  isOpen: boolean;
-  onOKBtnClick?(): void;
-}) => {
+const MatchesWelcomeModal = () => {
+  const { socket } = useSocket();
+  const dispatch = useDispatch();
   const selfName = useSelector(state => state.computed.self?.user.name ?? "无名") 
   const selfRole = useSelector(state => state.computed.self?.role) 
+  const selfPlayerId = useSelector(state => state.computed.self?.id);
+  const selfStatus = useSelector(state => state.computed.self?.status);
+  const matchesId = useSelector(state => state.matches.id);
+  const roomId = useSelector(state => state.matches.roomId);
+  const phases = useSelector(state => state.matches.phases);
+  const isOpen = useSelector(state => state.isWelcomeModalOpen);
+
+  const handleKnowItBtnClick = () => {
+    if (selfPlayerId && roomId && selfStatus === PlayerStatus.NotReady) {
+      socket?.emit(ACTION_GAME_READY, selfPlayerId, roomId, matchesId);
+    }
+    dispatch({ type: "CLOSE_WELCOME_MODAL" });
+  };
+
+  useEffect(()=>{
+    if(phases === Phases.Init && selfStatus === PlayerStatus.NotReady){
+      dispatch({ type: "OPEN_WELCOME_MODAL" });
+    }
+  }, [phases, selfStatus])
 
   const contentRender = () => {
     switch (selfRole) {
@@ -38,7 +54,7 @@ const MatchesWelcomeModal = ({
                 })}
               </p>
             </div>
-            <button className="mt-4" onClick={onOKBtnClick}>
+            <button className="mt-4" onClick={handleKnowItBtnClick}>
               知道了
             </button>
           </article>
@@ -68,7 +84,7 @@ const MatchesWelcomeModal = ({
                 我需要隐藏自己的【凶手】身份，并且表现得像一个正常的【侦探】以免被人怀疑，我必须让他们找不到我的【作案手法】和【线索】一直到三个回合结束。
               </p>
             </div>
-            <button className="mt-4" onClick={onOKBtnClick}>
+            <button className="mt-4" onClick={handleKnowItBtnClick}>
               知道了
             </button>
           </article>
@@ -96,7 +112,7 @@ const MatchesWelcomeModal = ({
                 })}
               </p>
             </div>
-            <button className="mt-4" onClick={onOKBtnClick}>
+            <button className="mt-4" onClick={handleKnowItBtnClick}>
               知道了
             </button>
           </article>

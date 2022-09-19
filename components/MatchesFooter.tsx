@@ -23,9 +23,7 @@ export const ROLE_TO_TEXT_MAP = {
   [Role.Accomplice]: "帮凶",
 };
 
-interface Props { curSpeakerId: number; }
-
-const MatchesFooter = ({ curSpeakerId }: Props) => {
+const MatchesFooter = () => {
   const { userInfo } = useContext(UserInfoContext);
   const { socket } = useSocket();
   const {
@@ -61,6 +59,7 @@ const MatchesFooter = ({ curSpeakerId }: Props) => {
     };
   });
   const self = useSelector(state => state.computed.self);
+  const curSpeakerId = useSelector(state => state.computed.curSpeakerId);
   const dispatch = useDispatch();
 
   if (!userInfo) return null;
@@ -126,14 +125,6 @@ const MatchesFooter = ({ curSpeakerId }: Props) => {
     }
   };
 
-  if (self?.role === Role.Witness && phases === Phases.ProvideTestimonials) {
-    return <PointOutInfoFooter playerId={self.id} />;
-  }
-
-  if (phases === Phases.AdditionalTestimonials && self?.role === Role.Witness) {
-    return <ReplenishInfoFooter />;
-  }
-
   if (canSelect) {
     return (
       <>
@@ -152,50 +143,71 @@ const MatchesFooter = ({ curSpeakerId }: Props) => {
         )}
       </>
     );
-  } else {
+  }
+
+  const selfInfoElem = (
+    <>
+      <Avatar nickname={self?.user.name} />
+      <div className="flex-1">
+        <div>{self?.user.name}</div>
+        <span className="text-sm text-gray-600">
+          {self ? ROLE_TO_TEXT_MAP[self.role as Role] : ""}
+        </span>
+        {self?.role === Role.Murderer && measure && clue ? (
+          <span className="text-sm ml-2">{`${measure} + ${clue}`}</span>
+        ) : null}
+      </div>
+    </>
+  )
+
+  if (self?.role === Role.Witness) {
+    if (phases === Phases.ProvideTestimonials) {
+      return <PointOutInfoFooter playerId={self.id} />;
+    } else if (phases === Phases.AdditionalTestimonials) {
+      return <ReplenishInfoFooter />;
+    } else if (phases > Phases.Murder) {
+      <>
+        {selfInfoElem}
+        <div className="text-right text-sm">
+          <div>
+            凶手是：<span className="font-bold">{murder?.user.name}</span>
+          </div>
+          <div>
+            选择了：
+            <span className="font-bold">{measure}</span>
+            和<span className="font-bold">{clue}</span>
+          </div>
+        </div>
+      </>
+    }
+  }
+
+  if (phases === Phases.Reasoning && curSpeakerId === self?.id) {
     return (
       <>
-        <Avatar nickname={self?.user.name} />
-        <div className="flex-1">
-          <div>{self?.user.name}</div>
-          <span className="text-sm text-gray-600">
-            {self ? ROLE_TO_TEXT_MAP[self.role as Role] : ""}
-          </span>
-          {self?.role === Role.Murderer && measure && clue ? (
-            <span className="text-sm ml-2">{`${measure} + ${clue}`}</span>
-          ) : null}
-        </div>
-        {phases === Phases.Reasoning && curSpeakerId === self?.id && (
-          <>
-            {self.remainingNumOfSolveCase > 0 && (
-              <button data-intro-id="solve-case-btn" onClick={handleSolve}>
-                破案
-              </button>
-            )}
-            <button data-intro-id="end-my-turn-btn" onClick={handleEndTheTurn}>
-              结束回合
-            </button>
-          </>
+        {selfInfoElem}
+        {self && self.remainingNumOfSolveCase > 0 && (
+          <button data-intro-id="solve-case-btn" onClick={handleSolve}>
+            破案
+          </button>
         )}
-        {phases > Phases.Murder && self?.role === Role.Witness && (
-          <div className="text-right text-sm">
-            <div>
-              凶手是：<span className="font-bold">{murder?.user.name}</span>
-            </div>
-            <div>
-              选择了：<span className="font-bold">{measure}</span> 和{" "}
-              <span className="font-bold">{clue}</span>
-            </div>
-          </div>
-        )}
-        {phases === Phases.AdditionalTestimonials && (
-          <>
-            <button onClick={handleCloseReplenishInfoModal}>{isReplenishModalOpen ? '返回' : '查看新增信息卡'}</button>
-          </>
-        )}
+        <button data-intro-id="end-my-turn-btn" onClick={handleEndTheTurn}>
+          结束回合
+        </button>
       </>
-    );
+    )
   }
+
+  if (phases === Phases.AdditionalTestimonials) {
+    return (
+      <>
+        {selfInfoElem}
+        <button onClick={handleCloseReplenishInfoModal}>{isReplenishModalOpen ? '返回' : '查看新增信息卡'}</button>
+      </>
+    )
+  }
+
+  return selfInfoElem;
 };
 
 export default React.memo(MatchesFooter);

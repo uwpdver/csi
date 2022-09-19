@@ -6,7 +6,6 @@ import React, {
   useCallback,
 } from "react";
 import type { GetServerSideProps } from "next";
-import { useRouter } from "next/router";
 import classnames from "classnames";
 import nookies from "nookies";
 
@@ -29,29 +28,26 @@ import reducer from "@/reducers/index";
 import {
   InitState,
   ActionType,
-  savaIntroCompletedKeysToStorage,
 } from "@/reducers/matches";
 
 import {
-  ACTION_GAME_READY,
-  ACTION_GAME_QUIT,
   BCST_ERROR,
   BCST_GAME_STATE_UPDATE,
   BCST_GAME_ALL_PLAYER_READY,
 } from "@/lib/socket/constants";
-
 import {
   ServerErrorHander,
   ServerGameAllPlayerReady,
   ServerGameStateUpdate,
 } from "@/lib/socket";
+import { useSocket } from "@/lib/socket";
+
 import { MatchesInClient, PlayerInClient } from "@/types/client";
-import { Phases, PlayerStatus, Role } from "@/types/index";
+import { Phases, Role } from "@/types/index";
 
 import { useConnectToRoom } from "@/utils/useConnectToRoom";
 import { useCountDown } from "@/utils/useCountDown";
 import { useListRef } from "@/utils/useListRef";
-import { useSocket } from "@/lib/socket";
 
 interface Props {
   matches: MatchesInClient;
@@ -59,7 +55,7 @@ interface Props {
   matchesId: number;
 }
 
-type InitStateWithComputed = InitState & { computed: { self?: PlayerInClient, murder?: PlayerInClient } }
+type InitStateWithComputed = InitState & { computed: { self?: PlayerInClient, murder?: PlayerInClient, curSpeakerId?: number } }
 
 type useSelectorType<S = any> = (cb: (state: InitStateWithComputed) => S) => S;
 
@@ -78,7 +74,6 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   useConnectToRoom(roomId);
   const { userInfo } = useContext(UserInfoContext);
   const [countDown, setCountDown] = useCountDown();
-  const router = useRouter();
   const [handCardPaneInstances, appendToListRef] = useListRef();
   const { isConnected, socket } = useSocket();
   const [state, dispatch] = useReducer(
@@ -86,16 +81,18 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
     reducer.matches.getInitState(matches)
   );
   const {
-    isWelcomeModalOpen,
-    replenishPane: { optionsNotSet },
-    handCardSelect: { selectedPlayerIndex, selectFor, canSelect },
+    handCardSelect: { selectedPlayerIndex },
     matches: { players, phases, rounds, currentPlayerIndex, measure, clue },
-    intro: { completedKeys },
   } = state;
 
   const playersCanSolve = useMemo(
     () => players.filter((play) => play.role !== Role.Witness),
     [players]
+  );
+
+  const curSpeakerId = useMemo(
+    () => playersCanSolve[currentPlayerIndex].id,
+    [playersCanSolve, currentPlayerIndex]
   );
 
   const self = useMemo(
@@ -159,68 +156,26 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
   }, [isConnected]);
 
   useEffect(() => {
-    switch (phases) {
-      case Phases.Init:
-        if (self?.status === PlayerStatus.NotReady) {
-          dispatch({ type: "OPEN_WELCOME_MODAL" });
-        }
-        break;
-      case Phases.Murder:
-        if (self?.role === Role.Murderer) {
-          dispatch({ type: "START_SELECT_HAND_CARD", selectFor: "murder" });
-          const index = playersCanSolve.findIndex(
-            (player) => player.role === Role.Murderer
-          );
-          scrollHandCardToView(index);
-          setTimeout(
-            () =>
-              dispatch({
-                type: "INTRO_SHOW",
-                key: "intro_murder",
-                steps: [
-                  {
-                    element: '[data-intro-id="hand-cards-container"]',
-                    intro: "选择一张手法牌（红色）和一张线索牌（白色）",
-                  },
-                ],
-              }),
-            500
-          );
-        }
-        break;
-      case Phases.ProvideTestimonials:
-        if (self?.role === Role.Witness) {
-          dispatch({
-            type: "INTRO_SHOW",
-            key: "intro_pointout",
-            steps: [
-              {
-                element: '[data-intro-id="matches-footer"]',
-                intro:
-                  "点击红色指示物，指示物上的数字代表对应信息的重要程度，将其放在信息卡的词条上来指示出一条指向凶手的【作案手法】或【线索】相关的信息",
-              },
-              {
-                element: '[data-intro-id="info-cards-container"]',
-                intro: "点击与之对应的信息词条，将指示物放置",
-              },
-              {
-                element: '[data-intro-id="info-cards-container"]',
-                intro: "将所有的指示物都放置在信息卡的词条上",
-              },
-            ],
-          });
-        }
-        break;
-      case Phases.AdditionalTestimonials:
-        dispatch({ type: "SYNC_REPLENISH_INFO" });
-        if (self?.role === Role.Witness) {
-          dispatch({ type: "OPEN_REPLENISH_INFO_MODAL" });
-        }
-        break;
-      default:
-        break;
+    if (phases === Phases.Murder && self?.role === Role.Murderer) {
+      dispatch({ type: "START_SELECT_HAND_CARD", selectFor: "murder" });
+      const index = playersCanSolve.findIndex(
+        (player) => player.role === Role.Murderer
+      );
+      scrollHandCardToView(index);
     }
   }, [phases, self, playersCanSolve]);
+
+  useEffect(() => {
+    if (phases === Phases.AdditionalTestimonials) {
+      dispatch({ type: "SYNC_REPLENISH_INFO" });
+    }
+  }, [phases]);
+
+  useEffect(() => {
+    if (phases === Phases.AdditionalTestimonials && self?.role === Role.Witness) {
+      dispatch({ type: "OPEN_REPLENISH_INFO_MODAL" });
+    }
+  }, [phases, self]);
 
   useEffect(() => {
     if (phases === Phases.Reasoning && rounds === 1) {
@@ -246,185 +201,20 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
     };
   }, [isConnected]);
 
-  useEffect(() => {
-    if (Object.keys(completedKeys).length !== 0) {
-      savaIntroCompletedKeysToStorage(completedKeys);
-    }
-  }, [completedKeys]);
-
-  const isAllSetted = state.pointOutInfo.optionsNotSet.length === 0;
-
-  useEffect(() => {
-    if (
-      isAllSetted &&
-      self?.role === Role.Witness &&
-      phases === Phases.ProvideTestimonials
-    ) {
-      dispatch({
-        type: "INTRO_SHOW",
-        key: "intro_pointout_comfirm",
-        steps: [
-          {
-            element: '[data-intro-id="comfirm-pointout-btn"]',
-            intro: "点击确定来完成指证",
-            position: "top",
-          },
-        ],
-      });
-    }
-  }, [isAllSetted, self, phases]);
-
-  useEffect(() => {
-    if (
-      self?.id === playersCanSolve[currentPlayerIndex].id &&
-      self?.role !== Role.Witness &&
-      phases === Phases.Reasoning &&
-      rounds === 1
-    ) {
-      dispatch({
-        type: "INTRO_SHOW",
-        key: "intro_pointout_comfirm",
-        steps: [
-          {
-            element: '[data-intro-id="matches-footer"]',
-            intro: (
-              <p>
-                现在是你的回合，你在自己的回合阐述你的推理和猜测来帮助所有侦探找出真相。
-              </p>
-            ),
-          },
-          {
-            element: '[data-intro-id="solve-case-btn"]',
-            intro: (
-              <>
-                <p>
-                  点击<b>【破案】</b>来使用你<b>全场唯一</b>的一次
-                  <b>【破案】</b>机会。
-                </p>
-                <p>
-                  如果指认结果正确，侦探将获得本场游戏的<b>胜利。</b>
-                </p>
-              </>
-            ),
-          },
-          {
-            element: '[data-intro-id="end-my-turn-btn"]',
-            intro: (
-              <p>
-                点击<b>【结束回合】</b>可以结束自己的回合，由下一位玩家行动。
-              </p>
-            ),
-            position: 'top',
-          },
-        ],
-      });
-    }
-  }, [self, phases, rounds, currentPlayerIndex, playersCanSolve]);
-
-  useEffect(() => {
-    if (canSelect && selectFor === "solveCase") {
-      dispatch({
-        type: "INTRO_SHOW",
-        key: "intro_additional_testimonials",
-        steps: [
-          // 选中的新场景卡应该由选中的样式
-          {
-            element: '[data-intro-id="hand-cards-container"]',
-            intro: (
-              <p>
-                指出你怀疑的 <b>【手段卡】</b>和<b>【线索卡】</b>
-              </p>
-            ),
-          },
-        ],
-      });
-    }
-  }, [canSelect, selectFor]);
-
-  useEffect(() => {
-    if (
-      self?.role === Role.Witness &&
-      phases === Phases.AdditionalTestimonials &&
-      rounds === 2
-    ) {
-      dispatch({
-        type: "INTRO_SHOW",
-        key: "intro_additional_testimonials",
-        steps: [
-          // 选中的新场景卡应该由选中的样式
-          {
-            element: '[data-intro-id="new-info-cards-container"]',
-            intro: (
-              <p>这里是新增的场景卡，点击该区域信息卡片顶部的名字来选择该卡</p>
-            ),
-          },
-          {
-            element: '[data-intro-id="replaceable-info-cards-container"]',
-            intro: <p>再次点击该区域信息卡片顶部的名字来替换掉一张卡</p>,
-          },
-        ],
-      });
-    }
-  }, [self, phases, rounds]);
-
-  useEffect(() => {
-    if (
-      self?.role === Role.Witness &&
-      phases === Phases.AdditionalTestimonials &&
-      optionsNotSet.length !== 0
-    ) {
-      dispatch({
-        type: "INTRO_SHOW",
-        key: "intro_additional_testimonials_reset_option",
-        steps: [
-          {
-            element: '[data-intro-id="replenish-info-footer__options"]',
-            intro: (
-              <p>
-                被替换的信息卡上的选项物会被重置，你可以点击指示物，然后将其重新放置在刚换上的信息卡的词条上。
-              </p>
-            ),
-          },
-          {
-            element: '[data-intro-id="replenish-info-footer__reset-btn"]',
-            intro: <p>如果你对替换的结果不满意，可以点击撤销重新替换。</p>,
-          },
-        ],
-      });
-    }
-  }, [self, phases, optionsNotSet]);
-
-  const handleKnowItBtnClick = () => {
-    if (self?.id && roomId && self.status === PlayerStatus.NotReady) {
-      socket?.emit(ACTION_GAME_READY, self.id, roomId, matchesId);
-    }
-    dispatch({ type: "CLOSE_WELCOME_MODAL" });
-  };
-
-  const handleQuitMatchesBtnClick = () => {
-    if (self) {
-      socket?.emit(ACTION_GAME_QUIT, self.id, roomId, matchesId);
-    }
-    router.replace(`/room/${roomId}`);
-  };
-
-  if (!userInfo) {
-    return null;
-  }
-
   return (
     <MatchesStateContext.Provider
       value={{
         getMatchesState: (callback: (state: InitStateWithComputed) => any) =>
-          callback({ ...state, computed: { self, murder } }),
+          callback({ ...state, computed: { self, murder, curSpeakerId } }),
       }}
     >
       <MatchesDispatchContext.Provider value={{ dispatch }}>
         <>
-          {self && <MatchesIntro self={self} />}
+          {/* 弹窗 */}
+          <MatchesIntro />
           <ReplenishInfoModal />
-          <GameEndModal onClose={handleQuitMatchesBtnClick} />
-          <MatchesWelcomeModal isOpen={isWelcomeModalOpen} onOKBtnClick={handleKnowItBtnClick} />
+          <GameEndModal />
+          <MatchesWelcomeModal />
 
           {/* 顶部标题栏 */}
           <Header>{phasesToTitleMap[phases]}</Header>
@@ -482,7 +272,7 @@ const Matches: NextPageWithLayout<Props> = ({ roomId, matchesId, matches }) => {
               data-intro-id="matches-footer"
               className="flex items-center space-x-2 "
             >
-              <MatchesFooter curSpeakerId={playersCanSolve[currentPlayerIndex].id} />
+              <MatchesFooter />
             </div>
           </div>
         </>
