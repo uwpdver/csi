@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy": "git pull && yarn install && next build && next start -p 3004"
   },
   "dependencies": {
     "@prisma/client": "^4.3.0",

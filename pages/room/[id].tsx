@@ -33,6 +33,8 @@ import {
   useSocket
 } from "@/lib/socket";
 
+import { MIN_CAN_START_NUM_OF_USER } from '@/constants/index';
+
 interface Props {
   data: Room & {
     users: (UserInRoom & {
@@ -41,8 +43,6 @@ interface Props {
     host: User;
   };
 }
-
-const MIN_CAN_START_NUM_OF_USER = 4;
 
 const Room: NextPageWithLayout<Props> = ({ data }) => {
   const [users, setUsers] = useState(data.users);
@@ -55,7 +55,6 @@ const Room: NextPageWithLayout<Props> = ({ data }) => {
   const { isReady } = users.find(
     (user) => user.userId === userInfo?.userId
   ) ?? { isReady: false };
-
   useConnectToRoom(roomId);
 
   useEffect(() => {
