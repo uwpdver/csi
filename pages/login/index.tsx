@@ -36,8 +36,6 @@ const Login: NextPageWithLayout<{}> = () => {
     }
   }, [router]);
 
-  useEffect(() => {}, [userInfo]);
-
   const saveUserInfo = (id:number, name:string) => {
     setUserInfo({ userId: id, nickname: name });
     saveUserInfoToStorage({ userId: id, nickname: name })
