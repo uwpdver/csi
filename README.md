@@ -1,5 +1,5 @@
 <div align="center" id="top">
-  <img height="300" src="public/images/hero.png" alt="hero image" />
+  <img height="256" src="https://bl3301files.storage.live.com/y4mHaLD0Xh8Hf56jMEXKY52oP5MBmW1pKYcHAqZJugxWUVsfZLgPk9Z9J-W5I2S19hh6Vh3mgSjNdfD8e5t9muZFMbF40dCEvRUILqrHA5yoffjrZW9tRsD7qJorQ0Gg_xoD22kKxqlyeKbBkVbc2TxuRS62TddVfVdso15BxuEfsHRSWJok_7gh5Q2-DTy3Qg8?width=660&height=399&cropmode=none" alt="hero image" />
 </div>
 
 <h1 align="center">犯罪现场-CSI（Crime Scene Investigation）</h1>
@@ -27,19 +27,19 @@
 
 ### 特色
 
-* 界面美观，界面还原桌游。  
-* 无需卡牌，当面对面游玩时无需携带卡牌，随时随地开始。  
-* 新手友好，如果之前从未接触过《犯罪现场》桌游也无需担心，你开始的每一步都有丰富的引导。  
-* 简单干净，没有添加游戏机制以外的功能。  
-* 隐私安全，不获取除邮箱账号以外的任何个人信息。  
-* 立即恢复，即使中途离开或关闭页面, 刷新页面即可返回游戏。  
+- 界面美观，界面还原桌游。
+- 无需卡牌，当面对面游玩时无需携带卡牌，随时随地开始。
+- 新手友好，如果之前从未接触过《犯罪现场》桌游也无需担心，你开始的每一步都有丰富的引导。
+- 简单干净，没有添加游戏机制以外的功能。
+- 隐私安全，不获取除邮箱账号以外的任何个人信息。
+- 立即恢复，即使中途离开或关闭页面, 刷新页面即可返回游戏。
 
 ### 不足
 
-* 不支持在线语音交流，需要通过其他方式进行语音交流，或者面对面交流。   
-* 界面仅为移动端浏览器设计，尚未适配PC浏览器等大屏幕设备。  
-* 缺少帮凶角色。
-* 不支持效果牌。
+- 不支持在线语音交流，需要通过其他方式进行语音交流，或者面对面交流。
+- 界面仅为移动端浏览器设计，尚未适配 PC 浏览器等大屏幕设备。
+- 缺少帮凶角色。
+- 不支持效果牌。
 
 ## 技术栈
 
@@ -113,6 +113,7 @@ $ npm run dev # 如果使用 yarn 的话则改成：yarn dev
 ```
 
 ### 构建
+
 ```bash
 # 安装好依赖之后
 npm run build # 如果使用 yarn 的话则改成：yarn build
@@ -124,7 +125,9 @@ npm run start # 如果使用 yarn 的话则改成：yarn start
 ```
 
 ### 部署
-需要安装：nodejs，git，yarn，pm2（如果使用npm需要修改脚本）
+
+需要安装：nodejs，git，yarn，pm2（如果使用 npm 需要修改脚本）
+
 ```bash
 # 克隆项目
 git clone https://github.com/uwpdver/csi
@@ -141,6 +144,7 @@ cd csi
 直接访问[网址](http://helloo.world:3004/)即可!
 
 ## 致谢
-README文档参考了另一个项目[狼人杀](https://github.com/xiong35/werewolf)的README文档，感谢[xiong35](https://github.com/xiong35)！
+
+README 文档参考了另一个项目[狼人杀](https://github.com/xiong35/werewolf)的 README 文档，感谢[xiong35](https://github.com/xiong35)！
 
 <a href="#top">返回顶部</a>
