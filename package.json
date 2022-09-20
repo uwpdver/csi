@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3004",
     "lint": "next lint",
-    "deploy": "git pull && yarn install && next build && next start -p 3004"
+    "deploy": "git pull && yarn install && next build && pm2 delete csi && pm2 start yarn --name csi -- start"
   },
   "dependencies": {
     "@prisma/client": "^4.3.0",
